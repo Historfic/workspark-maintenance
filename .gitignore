@@ -1,0 +1,22 @@
+# dependencies and build output
+node_modules/
+.next/
+out/
+dist/
+coverage/
+
+# env and secrets
+.env
+.env.*
+!.env.example
+
+# personal documents and the client's brief must never land in this repo
+*.pdf
+*.docx
+
+# OS and editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+*.log
