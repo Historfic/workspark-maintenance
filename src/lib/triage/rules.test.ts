@@ -1,0 +1,87 @@
+import { describe, expect, it } from "vitest";
+import { sampleText } from "@/test/fixtures";
+import { applySafetyRules, matchRules } from "./rules";
+
+const names = (text: string) => matchRules(text).map((rule) => rule.name);
+
+describe("matchRules on the brief's reports", () => {
+  it("flags water reaching an outlet (report 1)", () => {
+    expect(names(sampleText("r1"))).toContain("water_electrical");
+  });
+
+  it("flags no heat in freezing weather (report 2)", () => {
+    expect(names(sampleText("r2"))).toEqual(["no_heat_cold"]);
+  });
+
+  it("flags a hedged gas smell (report 4)", () => {
+    expect(names(sampleText("r4"))).toEqual(["gas_odor"]);
+  });
+
+  it("leaves routine problems alone (reports 3 and 5)", () => {
+    expect(names(sampleText("r3"))).toEqual([]);
+    expect(names(sampleText("r5"))).toEqual([]);
+  });
+});
+
+describe("matchRules on near misses", () => {
+  it.each([
+    "The gas stove works fine, but the oven light is out.",
+    "Smoke detector keeps chirping, probably the battery.",
+    "The water heater is making a banging noise.",
+    "The heater works but the AC is not cooling.",
+  ])("does not escalate: %s", (text) => {
+    expect(names(text)).toEqual([]);
+  });
+
+  it.each([
+    ["There's smoke coming out of the outlet.", "fire_smoke"],
+    ["A pipe burst under the sink and water is pouring out.", "flooding"],
+    ["Our CO detector is going off.", "gas_odor"],
+    ["The furnace stopped working and it's really cold in here.", "no_heat_cold"],
+  ])("escalates: %s", (text, rule) => {
+    expect(names(text)).toContain(rule);
+  });
+});
+
+describe("applySafetyRules", () => {
+  it("raises a calm model priority to the rule's floor", () => {
+    expect(
+      applySafetyRules({ priority: "Medium", rationale: "unsure" }, "maybe I smell gas"),
+    ).toEqual({
+      priority: "Emergency",
+      source: "rule:gas_odor",
+      reason: expect.stringContaining("gas odor"),
+    });
+  });
+
+  it("makes the rule the policy of record when the model already agrees", () => {
+    expect(
+      applySafetyRules({ priority: "Emergency", rationale: "gas" }, "smells like gas").source,
+    ).toBe("rule:gas_odor");
+  });
+
+  it("keeps the model's priority when it is above every matched floor", () => {
+    expect(
+      applySafetyRules(
+        { priority: "Emergency", rationale: "elderly tenant, no heat" },
+        "the heat isn't working and it's freezing",
+      ),
+    ).toEqual({ priority: "Emergency", source: "model", reason: "elderly tenant, no heat" });
+  });
+
+  it("uses the model's rationale when no rule matches", () => {
+    expect(
+      applySafetyRules({ priority: "Low", rationale: "cosmetic" }, "window won't close"),
+    ).toEqual({
+      priority: "Low",
+      source: "model",
+      reason: "cosmetic",
+    });
+  });
+
+  it("breaks ties by rule order", () => {
+    expect(
+      applySafetyRules({ priority: "Low", rationale: "x" }, "I smell gas and see smoke").source,
+    ).toBe("rule:gas_odor");
+  });
+});
