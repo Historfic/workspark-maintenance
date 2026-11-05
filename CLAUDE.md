@@ -132,7 +132,7 @@ one report, and understated urgency. Reports 2, 3 and 4 are the evidence.
 explains *why* when non-obvious. Never one giant commit, never "fix", "update", "wip", "changes".
 
 **Branches and PRs.** One branch and one PR per phase (schema, extraction, dashboard, voice).
-PR body: what, why, how it was tested, screenshot for UI. Squash-merge to `main`.
+PR body: what, why, how it was tested, screenshot for UI. Merge with a merge commit so the small commits stay visible on `main`.
 
 **CI.** GitHub Actions from the first PR: typecheck, lint, test on push and PR. Badge in README.
 
@@ -196,5 +196,6 @@ path contains `ñ` (`C:\Users\Ivan Quiñola\...`) — if a tool chokes on it, su
 
 ## Commands
 
-Fill in after scaffolding: `pnpm dev`, `pnpm test`, `pnpm eval`, `pnpm lint`, `pnpm typecheck`,
-migration command.
+`pnpm dev` · `pnpm test` · `pnpm lint` · `pnpm typecheck` · `pnpm format` ·
+`pnpm eval` (five sample reports against the real model; `--persist` also saves them) ·
+`pnpm db:migrate` (applies `supabase/migrations/*.sql` via `DATABASE_URL`).
