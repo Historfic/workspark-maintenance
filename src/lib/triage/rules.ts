@@ -20,11 +20,11 @@ const WATER = /\b(leak\w*|water|drip\w*|flood\w*)\b/i;
 const ELECTRICAL =
   /\b(outlets?|sockets?|electrical|electric|wiring|wires?|breakers?|panel|sparks?|sparking)\b/i;
 const FIRE =
-  /\b(fire(?!\s+(extinguisher|alarm|drill|door|escape|code|safety|department))|burning smell|smells? (like )?burning|sparks?|sparking)\b/i;
+  /\b(fire(?!\s+(extinguisher|drill|door|escape|code|safety|department))|burning smell|smells? (like )?burning|sparks?|sparking)\b/i;
 const SMOKE = /\b(smoke|smoky)\b/i;
-// Global and lazy so every "smoke alarm ... beeping" clause can be cut out of a text
-// before SMOKE runs on what is left; use only with String#replace.
-const SMOKE_ALARM_CHIRP = /\bsmoke (detector|alarm)s?\b[^.!?]*?\b(chirp\w*|beep\w*)/gi;
+// Global and lazy so every "smoke/fire alarm ... beeping" clause can be cut out of a text
+// before FIRE and SMOKE run on what is left; use only with String#replace.
+const SMOKE_ALARM_CHIRP = /\b(smoke|fire) (detector|alarm)s?\b[^.!?]*?\b(chirp\w*|beep\w*)/gi;
 const FLOODING = /\b(flood(ed|ing)?|burst pipe|pipe (has )?burst|water (is )?(pouring|gushing))\b/i;
 const HEAT_OUT =
   /\bno heat\b|\b(?<!water\s)(heat|heater|heating|furnace)\b[^.!?]{0,30}?\b(not|isn['’]t|stopped|broken|out|won['’]t|doesn['’]t|died)\b/i;
@@ -51,7 +51,10 @@ export const SAFETY_RULES: readonly SafetyRule[] = [
     name: "fire_smoke",
     floor: "Emergency",
     reason: "Fire, smoke, or sparking reported.",
-    test: (text) => FIRE.test(text) || SMOKE.test(withoutAlarmChirps(text)),
+    test: (text) => {
+      const report = withoutAlarmChirps(text);
+      return FIRE.test(report) || SMOKE.test(report);
+    },
   },
   {
     name: "flooding",

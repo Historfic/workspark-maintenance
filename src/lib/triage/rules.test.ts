@@ -60,6 +60,19 @@ describe("matchRules on review round 1 cases", () => {
   });
 });
 
+describe("matchRules on review round 2 cases", () => {
+  it("does not escalate: Fire alarm keeps chirping, probably the battery.", () => {
+    expect(names("Fire alarm keeps chirping, probably the battery.")).toEqual([]);
+  });
+
+  it.each([
+    ["The fire alarm is going off", "fire_smoke"],
+    ["There's a smoky smell in the hallway.", "fire_smoke"],
+  ])("escalates: %s", (text, rule) => {
+    expect(names(text)).toContain(rule);
+  });
+});
+
 describe("applySafetyRules", () => {
   it("raises a calm model priority to the rule's floor", () => {
     expect(
