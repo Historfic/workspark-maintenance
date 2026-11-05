@@ -1,6 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import Anthropic from "@anthropic-ai/sdk";
+import { createServerStore } from "@/lib/db/server-store";
 import { requireEnv } from "@/lib/env";
 import { checkSample, renderResultsTable, type SampleOutcome } from "@/lib/triage/eval-check";
 import { createExtractor, DEFAULT_MODEL } from "@/lib/triage/extract";
@@ -31,6 +32,9 @@ async function main(): Promise<void> {
     new Anthropic({ apiKey: requireEnv("ANTHROPIC_API_KEY") }),
     model,
   );
+  const store = process.argv.includes("--persist")
+    ? createServerStore(requireEnv("NEXT_PUBLIC_SUPABASE_URL"), requireEnv("SUPABASE_SECRET_KEY"))
+    : null;
 
   const outcomes: SampleOutcome[] = [];
   for (const sample of SAMPLE_REPORTS) {
@@ -40,6 +44,7 @@ async function main(): Promise<void> {
     );
     const failures = checkSample(sample, result);
     outcomes.push({ sample, result, failures });
+    if (store) await store.saveTriage(result);
     console.log(
       `${failures.length === 0 ? "PASS" : "FAIL"}  ${sample.label}  ${failures.join("; ")}`,
     );
