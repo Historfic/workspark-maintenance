@@ -43,6 +43,23 @@ describe("matchRules on near misses", () => {
   });
 });
 
+describe("matchRules on review round 1 cases", () => {
+  it.each([
+    "The fire extinguisher is missing from the hallway.",
+    "My neighbor keeps smoking in the stairwell.",
+    "The water heater isn't working, only cold water comes out.",
+  ])("does not escalate: %s", (text) => {
+    expect(names(text)).toEqual([]);
+  });
+
+  it.each([
+    ["The smoke alarm is beeping and there's smoke in the hallway", "fire_smoke"],
+    ["There's a fire in the kitchen!", "fire_smoke"],
+  ])("escalates: %s", (text, rule) => {
+    expect(names(text)).toContain(rule);
+  });
+});
+
 describe("applySafetyRules", () => {
   it("raises a calm model priority to the rule's floor", () => {
     expect(
@@ -83,5 +100,26 @@ describe("applySafetyRules", () => {
     expect(
       applySafetyRules({ priority: "Low", rationale: "x" }, "I smell gas and see smoke").source,
     ).toBe("rule:gas_odor");
+  });
+
+  it("names the rule when the model already sits exactly at a High floor", () => {
+    expect(
+      applySafetyRules(
+        { priority: "High", rationale: "no heat" },
+        "the heat isn't working and it's freezing",
+      ),
+    ).toEqual({
+      priority: "High",
+      source: "rule:no_heat_cold",
+      reason: expect.stringContaining("No heat"),
+    });
+  });
+
+  it("raises a High model priority to Emergency for a gas odor", () => {
+    expect(applySafetyRules({ priority: "High", rationale: "gas" }, "I smell gas")).toEqual({
+      priority: "Emergency",
+      source: "rule:gas_odor",
+      reason: expect.stringContaining("gas odor"),
+    });
   });
 });
