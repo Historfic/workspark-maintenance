@@ -40,7 +40,29 @@ const SOURCE_LABEL: Record<Source, string> = {
   web_call: "Browser call transcript",
 };
 
+/**
+ * Any opening or closing report tag, allowing whitespace around the slash and
+ * name and attributes before the closing bracket: `</report >`, `</ report>`,
+ * `<REPORT foo="x">`.
+ */
+const REPORT_TAG = /<\s*\/?\s*report\b[^>]*>/gi;
+
+/**
+ * Remove report tags until none remain. A single pass is not enough: removing
+ * the inner tag from `</rep</report>ort>` leaves a fresh `</report>` behind,
+ * which would close the report block early.
+ */
+function stripReportTags(text: string): string {
+  let current = text;
+  let previous: string;
+  do {
+    previous = current;
+    current = current.replace(REPORT_TAG, "");
+  } while (current !== previous);
+  return current;
+}
+
 export function buildUserMessage(text: string, source: Source): string {
-  const body = text.replace(/<\/?report>/gi, "");
+  const body = stripReportTags(text);
   return `${SOURCE_LABEL[source]}:\n<report>\n${body}\n</report>`;
 }
