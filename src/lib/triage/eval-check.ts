@@ -62,7 +62,8 @@ export function renderResultsTable(outcomes: SampleOutcome[]): string {
     );
     const latency =
       result.report.latency_ms === null ? "—" : `${(result.report.latency_ms / 1000).toFixed(1)} s`;
-    const verdict = failures.length === 0 ? "pass" : `FAIL: ${failures.join("; ")}`;
+    const verdict =
+      failures.length === 0 ? "pass" : `FAIL: ${failures.join("; ")}`.replace(/\|/g, "\\|");
     return `| ${index + 1} | ${sample.label} | ${result.tickets.length} | ${types} | ${units} | ${followUps} | ${latency} | ${verdict} |`;
   });
   return [...header, ...rows].join("\n");

@@ -16,7 +16,9 @@ async function writeResults(content: string): Promise<void> {
   const doc = await readFile(WALKTHROUGH, "utf8");
   const start = doc.indexOf(START);
   const end = doc.indexOf(END);
-  if (start === -1 || end === -1) throw new Error(`docs/walkthrough.md needs ${START} and ${END}`);
+  if (start === -1 || end === -1 || end < start) {
+    throw new Error(`docs/walkthrough.md needs ${START} followed by ${END}`);
+  }
   await writeFile(
     WALKTHROUGH,
     `${doc.slice(0, start + START.length)}\n${content}\n${doc.slice(end)}`,
