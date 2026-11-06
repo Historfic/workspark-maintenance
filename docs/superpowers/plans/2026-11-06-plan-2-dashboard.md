@@ -1784,7 +1784,7 @@ export function RawOutput({ report }: { report: ReportRow }) {
 ```tsx
 "use client";
 
-import { XIcon } from "@phosphor-icons/react";
+import { WarningCircleIcon, XIcon } from "@phosphor-icons/react";
 import { Dialog } from "radix-ui";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -1856,8 +1856,11 @@ export function OrderDrawer({ order, onClose }: { order: WorkOrderRow | null; on
                   </div>
                 )}
                 {bundle.kind === "error" && (
-                  <div role="alert" className="rounded border border-emergency/40 p-3 text-sm">
-                    <p>{bundle.message}</p>
+                  <div role="alert" className="rounded border border-line bg-bg p-3 text-sm">
+                    <p className="flex items-center gap-2">
+                      <WarningCircleIcon size={18} aria-hidden className="shrink-0 text-ink-muted" />
+                      {bundle.message}
+                    </p>
                     <Button variant="secondary" size="sm" className="mt-2" onClick={() => setAttempt((n) => n + 1)}>
                       Retry
                     </Button>
