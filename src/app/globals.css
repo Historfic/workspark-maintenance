@@ -14,6 +14,7 @@
   --color-followup-line: #d97706;
   --color-done: #15803d;
   --color-done-bg: #dcfce7;
+  --color-priority-low: #94a3b8;
 
   --font-sans: var(--font-fira-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-fira-code), ui-monospace, "SFMono-Regular", monospace;

@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { IntakeChart } from "@/components/insights/intake-chart";
+import { KpiTiles } from "@/components/insights/kpi-tiles";
+import { PriorityBar } from "@/components/insights/priority-bar";
 import { IntakePanel } from "@/components/intake/intake-panel";
 import { TriageExplainer } from "@/components/intake/triage-explainer";
 import { FilterTabs } from "@/components/orders/filter-tabs";
@@ -11,6 +14,7 @@ import { PageHeader } from "@/components/page-header";
 import { useWorkOrdersFeed } from "@/hooks/use-work-orders-feed";
 import type { WorkOrderRow } from "@/lib/db/types";
 import { countFilters, type FilterKey } from "@/lib/dashboard/filters";
+import { dailyIntake, openByPriority } from "@/lib/dashboard/stats";
 import type { Status } from "@/lib/triage/schema";
 
 async function patchStatus(id: string, status: Status): Promise<void> {
@@ -55,6 +59,8 @@ export function Dashboard({
   }, [state.announcement]);
 
   const counts = useMemo(() => countFilters(state.orders), [state.orders]);
+  const slices = useMemo(() => openByPriority(state.orders), [state.orders]);
+  const buckets = useMemo(() => dailyIntake(state.orders, now), [state.orders, now]);
   const openOrder = state.orders.find((order) => order.id === openId) ?? null;
 
   async function onStatusChange(id: string, status: Status) {
@@ -72,32 +78,42 @@ export function Dashboard({
     for (const row of orders) dispatch({ type: "upsert", row, fromRealtime: false });
   }
 
-  // Phones get the list right under the form; the explainer drops to the end. From `md` the two
-  // panels sit side by side above the list, and from `xl` they stack in a left column beside it.
+  // Phones get the insights and the list right under the form; the explainer drops to the end.
+  // From `md` the two panels sit side by side above them, and from `xl` they stack in a left
+  // column beside the right one.
   return (
     <div className="min-h-dvh">
       <PageHeader right={<LiveIndicator connection={state.connection} />} />
       <main className="mx-auto grid max-w-[96rem] items-start gap-6 p-4 md:grid-cols-2 md:p-6 xl:grid-cols-[20rem_1fr] xl:grid-rows-[auto_1fr]">
         <IntakePanel onCreated={onCreated} />
         <TriageExplainer className="order-last md:order-none xl:col-start-1" />
-        <section
-          aria-labelledby="orders-heading"
-          className="min-w-0 rounded border border-line bg-surface shadow-card md:col-span-2 xl:col-span-1 xl:col-start-2 xl:row-span-2 xl:row-start-1"
-        >
-          <h2 id="orders-heading" className="sr-only">
-            Work orders
-          </h2>
-          <FilterTabs value={filter} counts={counts} onChange={setFilter}>
-            <WorkOrderList
-              orders={state.orders}
-              recentIds={state.recentIds}
-              filter={filter}
-              now={now}
-              onStatusChange={onStatusChange}
-              onOpen={setOpenId}
-            />
-          </FilterTabs>
-        </section>
+        <div className="flex min-w-0 flex-col gap-6 md:col-span-2 xl:col-span-1 xl:col-start-2 xl:row-span-2 xl:row-start-1">
+          <div className="flex flex-col gap-3">
+            <KpiTiles counts={counts} active={filter} onSelect={setFilter} />
+            <div className="grid gap-3 md:grid-cols-[1.4fr_1fr]">
+              <PriorityBar slices={slices} />
+              <IntakeChart buckets={buckets} />
+            </div>
+          </div>
+          <section
+            aria-labelledby="orders-heading"
+            className="min-w-0 rounded border border-line bg-surface shadow-card"
+          >
+            <h2 id="orders-heading" className="sr-only">
+              Work orders
+            </h2>
+            <FilterTabs value={filter} counts={counts} onChange={setFilter}>
+              <WorkOrderList
+                orders={state.orders}
+                recentIds={state.recentIds}
+                filter={filter}
+                now={now}
+                onStatusChange={onStatusChange}
+                onOpen={setOpenId}
+              />
+            </FilterTabs>
+          </section>
+        </div>
       </main>
       <p className="sr-only" aria-live="polite">
         {liveText}
