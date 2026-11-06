@@ -10,7 +10,7 @@ export function SampleChips({
   onPick: (text: string) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-2" aria-label="Sample reports">
+    <div role="group" aria-label="Sample reports" className="flex flex-wrap gap-2">
       {SAMPLE_REPORTS.map((sample) => (
         <button
           key={sample.id}

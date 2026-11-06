@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { WarningCircleIcon } from "@phosphor-icons/react/dist/ssr";
+import { useRef, useState, type FormEvent } from "react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -41,6 +42,7 @@ async function submitReport(text: string): Promise<WorkOrderRow[]> {
 export function IntakePanel({ onCreated }: { onCreated: (orders: WorkOrderRow[]) => void }) {
   const [text, setText] = useState("");
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const busy = phase.kind === "submitting";
   const remaining = MAX_REPORT_CHARS - text.length;
 
@@ -61,6 +63,11 @@ export function IntakePanel({ onCreated }: { onCreated: (orders: WorkOrderRow[])
     }
   }
 
+  function tryAgain() {
+    setPhase({ kind: "idle" });
+    textareaRef.current?.focus();
+  }
+
   return (
     <section aria-labelledby="intake-heading" className="rounded border border-line bg-surface p-4">
       <h2
@@ -75,12 +82,13 @@ export function IntakePanel({ onCreated }: { onCreated: (orders: WorkOrderRow[])
             What did the caller say?
           </label>
           <Textarea
+            ref={textareaRef}
             id="report-text"
             name="text"
             rows={5}
             maxLength={MAX_REPORT_CHARS}
             value={text}
-            disabled={busy}
+            readOnly={busy}
             onChange={(event) => setText(event.target.value)}
             placeholder="Hi, this is apartment 4B. There's water coming through the ceiling…"
             aria-describedby="report-help"
@@ -99,23 +107,21 @@ export function IntakePanel({ onCreated }: { onCreated: (orders: WorkOrderRow[])
         <p className="mb-2 text-xs text-ink-muted">Try one of the sample reports</p>
         <SampleChips disabled={busy} onPick={(sample) => setText(sample)} />
       </div>
-      <div className="mt-4 min-h-6">
+      <div role="status" aria-live="polite" className="mt-4 min-h-6">
         {phase.kind === "done" && <IntakeResult orders={phase.orders} />}
-        {phase.kind === "error" && (
-          <div role="alert" className="rounded border border-emergency/40 bg-surface p-3 text-sm">
-            <p className="font-medium">Couldn’t create the ticket</p>
-            <p className="mt-1 text-ink-muted">{phase.message}</p>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="mt-2"
-              onClick={() => setPhase({ kind: "idle" })}
-            >
-              Try again
-            </Button>
-          </div>
-        )}
       </div>
+      {phase.kind === "error" && (
+        <div role="alert" className="mt-4 rounded border border-line bg-surface p-3 text-sm">
+          <p className="flex items-center gap-2 font-medium">
+            <WarningCircleIcon size={18} aria-hidden className="text-ink-muted" />
+            Couldn’t create the ticket
+          </p>
+          <p className="mt-1 text-ink-muted">{phase.message}</p>
+          <Button variant="secondary" size="sm" className="mt-2" onClick={tryAgain}>
+            Try again
+          </Button>
+        </div>
+      )}
     </section>
   );
 }

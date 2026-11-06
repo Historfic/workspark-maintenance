@@ -3,7 +3,7 @@ import { PriorityBadge } from "@/components/orders/priority-badge";
 
 export function IntakeResult({ orders }: { orders: WorkOrderRow[] }) {
   return (
-    <div role="status" className="rounded border border-line bg-bg p-3 text-sm">
+    <div className="rounded border border-line bg-bg p-3 text-sm">
       <p className="font-medium">
         Created {orders.length} ticket{orders.length === 1 ? "" : "s"}
       </p>
