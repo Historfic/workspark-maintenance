@@ -20,3 +20,8 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 *.log
+
+# Next.js and tooling
+next-env.d.ts
+*.tsbuildinfo
+.vercel/

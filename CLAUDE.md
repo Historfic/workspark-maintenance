@@ -19,13 +19,15 @@ Rafael's machine setup checklist: `docs/handoff/SETUP-NEW-DESKTOP.md`.
 - [x] Brief read, plan proposed (2026-11-05, on the previous desktop)
 - [x] Open decisions below answered by Rafael (2026-11-05, new desktop)
 - [x] Machine setup: CLIs installed, accounts authed, `.env.local` filled and every key verified (2026-11-05)
-- [ ] Before submitting: rotate the keys Rafael pasted into chat (Anthropic, Vapi private, Supabase secret, DB password)
+- [x] Anthropic and Supabase secret keys rotated before the first deploy (2026-11-06)
+- [ ] Before submitting: rotate the local-only Vapi private key and database password
 - [x] Design spec written to `docs/superpowers/specs/` and approved (2026-11-05)
-- [ ] Plan 1 (triage core) written to `docs/superpowers/plans/` (2026-11-05; awaiting approval).
-      Plans 2 (dashboard) and 3 (voice, docs) are written after Plan 1 lands.
-- [ ] Phase 0 — repo, CI, env scaffolding, Supabase schema
-- [ ] Phase 1 — extraction core (test-first) + eval over the 5 reports
-- [ ] Phase 2 — API routes, persistence, realtime
+- [x] Plan 1 (triage core) written to `docs/superpowers/plans/` and approved (2026-11-05).
+- [x] Plan 2 (dashboard) written and approved (2026-11-06); runs after Plan 1 merges.
+      Plan 3 (voice, README, walkthrough) is written after Plan 2 lands.
+- [x] Phase 0 — repo, CI, env scaffolding, Supabase schema (2026-11-06, branch `feat/triage-core`)
+- [x] Phase 1 — extraction core (test-first) + eval over the 5 reports (5/5 on Fable, prompt 2026-11-05.3)
+- [x] Phase 2 — API routes, persistence (realtime subscription is wired in Phase 3's UI)
 - [ ] Phase 3 — dashboard UI, status updates
 - [ ] Phase 4 — voice input
 - [ ] Phase 5 — README, walkthrough, Loom script, screenshots, final review
@@ -46,10 +48,10 @@ Rafael's machine setup checklist: `docs/handoff/SETUP-NEW-DESKTOP.md`.
    that is only the email). Public repo **`Historfic/workspark-maintenance`** — not yet created; get
    Rafael's explicit go-ahead before creating it or pushing. Commit identity
    `Rafael B. Bashan <raffymcfee@gmail.com>` (verified: GitHub links it to Historfic), set
-   **repo-local** (this machine's global git config is empty and belongs to another Windows user —
-   do not set it globally). Commits **keep** the `Co-Authored-By: Claude` trailer; the README says
-   how AI was used. `Historfic/workspark` is the **private** hand-off repo from the old desktop; its
-   history contains the brief `.docx`, so it must never be made public.
+   **repo-local** (do not change the machine's global git config). Commits **keep** the
+   `Co-Authored-By: Claude` trailer; the README says how AI was used. `Historfic/workspark` is the
+   **private** hand-off repo from the old desktop; its history contains the brief `.docx`, so it
+   must never be made public.
 4. **Live deploy.** Yes, on Vercel (also required for the Vapi webhook).
 5. **Model — Fable.** The app's extraction calls **`claude-fable-5-1`** at `effort: "low"`,
    overridable via `ANTHROPIC_MODEL`. Fable notes: thinking is always on (omit `thinking`), forced
@@ -103,18 +105,21 @@ one report, and understated urgency. Reports 2, 3 and 4 are the evidence.
 ## Architecture summary (the design spec wins where they differ)
 
 - **One Claude call per report** with structured outputs. Schema returns `issues[]` so one report can
-  yield many tickets. `unit` is nullable; the prompt forbids guessing. Zod validates the output before
-  any DB write. One retry with the validation error fed back; on a second failure, save the report
-  and one `Other` ticket flagged for follow-up so nothing is silently lost.
+  yield many tickets. `unit` is nullable; the prompt forbids guessing and code enforces it (a unit
+  survives only if the report states it; quotes must be verbatim). Zod validates the output before
+  any DB write. One retry; on a second failure, save the report and one `Other` ticket flagged for
+  manual review so nothing is silently lost — the safety rules still run on that ticket.
 - **Deterministic safety layer after the model.** Rules for gas odor, water contacting electrical,
   fire or smoke, flooding, no heat in cold weather. Rules may only **raise** priority. Each ticket
-  stores `priority_source` (`model` or `rule:<name>`) and a human-readable `priority_reason`.
+  stores `priority_source` (`model`, `rule:<name>`, or `fallback`) and a human-readable
+  `priority_reason`; the model's own `model_priority` and `model_rationale` are kept beside them.
 - **Enums.** `issue_type`: Plumbing | Electrical | HVAC | Appliance | Gas | Structural | Pest | Other.
   `priority`: Low | Medium | High | Emergency. `status`: New | In Progress | Done.
-- **Tables.** `reports` (raw text, source `text|audio|phone`, transcript, llm raw output, model,
-  prompt version, created_at) and `work_orders` (report_id FK, issue_type, priority, unit, location
-  detail, summary, needs_followup, missing_fields, caller_stated_urgency, priority_source,
-  priority_reason, status, timestamps).
+- **Tables.** `reports` (raw text or transcript, source `text|phone|web_call`, caller last-4,
+  Vapi call id, caller-stated urgency, validated model output, model, prompt version, latency,
+  created_at) and `work_orders` (report_id FK, issue_type, priority, model_priority, unit, area,
+  summary, source_quote, needs_followup, missing_fields, grounding_notes, priority_source,
+  priority_reason, status, timestamps). `intake_events` backs the per-IP rate limit.
 - **Dashboard.** Intake panel (textarea, 5 sample-report chips, mic/upload) + work-order table
   (priority badge, type, unit or "Unit unknown" chip, summary, status control, relative time).
   Emergency sorts first. Filters by status and follow-up. Row drawer shows original report, sibling
@@ -122,8 +127,9 @@ one report, and understated urgency. Reports 2, 3 and 4 are the evidence.
 - **Voice.** Vapi assistant, two entry points: inbound phone number and in-browser web call
   (Vapi Web SDK). End-of-call-report webhook (verify shared secret) → same pipeline,
   `source = 'phone'` or `'web_call'`. Needs the Vercel URL. No audio upload, no separate STT.
-- **Security.** Secrets only in env vars; `.env.example` with comments; service-role key
-  server-side only; anon key limited by RLS to read; validate and sanitize LLM output before writing.
+- **Security.** Secrets only in env vars; `.env.example` with comments; secret key server-side
+  only; publishable key limited by RLS to read; validate, ground and sanitize LLM output before
+  writing; per-IP rate limit on intake.
 - **No auth.** Deliberate omission for the prototype; say so in README and an ADR.
 
 ## Engineering standards
@@ -132,9 +138,10 @@ one report, and understated urgency. Reports 2, 3 and 4 are the evidence.
 explains *why* when non-obvious. Never one giant commit, never "fix", "update", "wip", "changes".
 
 **Branches and PRs.** One branch and one PR per phase (schema, extraction, dashboard, voice).
-PR body: what, why, how it was tested, screenshot for UI. Squash-merge to `main`.
+PR body: what, why, how it was tested, screenshot for UI. Merge with a merge commit so the small commits stay visible on `main`.
 
-**CI.** GitHub Actions from the first PR: typecheck, lint, test on push and PR. Badge in README.
+**CI.** GitHub Actions from the first PR: typecheck, lint, format check, test on push and PR.
+Badge in README.
 
 **Tests that mean something.** Unit tests on the escalation rules and Zod validators. A fixture-based
 `pnpm eval` that runs the five reports through the real pipeline and writes results to
@@ -179,22 +186,31 @@ VAPI_WEBHOOK_SECRET=            # verifies end-of-call webhooks
 RATE_LIMIT_SALT=                # hashes client IPs for the intake rate limit
 ```
 
+## Deployment
+
+- Public repo: https://github.com/Historfic/workspark-maintenance (CI: GitHub Actions on push to
+  `main` and on pull requests).
+- Production: https://workspark-maintenance.vercel.app (Vercel project `workspark-maintenance`,
+  functions in `icn1`, connected to the GitHub repo; `main` deploys to production, PRs get previews).
+  Server env vars live in Vercel; `DATABASE_URL` and `VAPI_PRIVATE_KEY` stay local (scripts only).
+  Note: `vercel deploy --prod` is deprecated in CLI 65 — use `--environment production`.
+
 ## Setup state — this machine (Windows, PowerShell + Git Bash)
 
 Supabase project for this app: `zjzcwgwaipzbednuakun`, region **ap-northeast-2 (Seoul)** — not East
 US as planned; kept to avoid recreating it. Pin Vercel functions to **`icn1`** (Seoul) in
 `vercel.json` so server code sits next to the database. This PC has no IPv6, so connect through the
 session pooler `aws-0-ap-northeast-2.pooler.supabase.com:5432`, user `postgres.zjzcwgwaipzbednuakun`
-(the direct `db.<ref>.supabase.co` host is IPv6-only). On Rafael's free plan. His other
-active project ("raffymcfee@gmail.com's Project") holds unrelated business data — never touch it.
-No Management API token for the new project; keys were copied from the dashboard. Uses the new key
-types (publishable / secret), not legacy anon / service_role.
+(the direct `db.<ref>.supabase.co` host is IPv6-only). Free plan. This project is dedicated to
+the app; do not point the app at any other Supabase project. Uses the new key types
+(publishable / secret), not legacy anon / service_role. Migrations are applied by
+`pnpm db:migrate` (a small `pg` script); the Supabase CLI is not used.
 
-Node 24, npm 11, git and Python are present. `gh`, `vercel`, `pnpm` were missing on 2026-11-05.
-Supabase CLI runs via `pnpm dlx supabase` / devDependency, not a global install. The workspace
-path contains `ñ` (`C:\Users\Ivan Quiñola\...`) — if a tool chokes on it, suspect that first.
+Node 24, pnpm 12, git, `gh` (portable install) and `vercel` are present. The workspace path
+contains a non-ASCII character — if a tool chokes on it, suspect that first.
 
 ## Commands
 
-Fill in after scaffolding: `pnpm dev`, `pnpm test`, `pnpm eval`, `pnpm lint`, `pnpm typecheck`,
-migration command.
+`pnpm dev` · `pnpm test` · `pnpm lint` · `pnpm typecheck` · `pnpm format` ·
+`pnpm eval` (five sample reports against the real model; `--persist` also saves them) ·
+`pnpm db:migrate` (applies `supabase/migrations/*.sql` via `DATABASE_URL`).

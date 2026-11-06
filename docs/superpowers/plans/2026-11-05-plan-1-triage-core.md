@@ -21,7 +21,7 @@ Spec: `docs/superpowers/specs/2026-11-05-maintenance-triage-design.md`. Later pl
 - Files under ~200 lines, one job each. No comments that narrate code; a short *why* comment is fine. No blanket try/catch — catch only where an error is converted (SDK → `ExtractionError`, JSON parse, one HTTP boundary).
 - Before every commit: `pnpm format`, then `git diff --cached` checked for secrets (`sk-ant-`, `sb_secret_`, `sbp_`, UUID-shaped Vapi keys, `postgresql://…:…@`). `.env.local` is never staged.
 - Commits: imperative subject ≤ 72 chars, body explains *why* when non-obvious, end with the trailer line `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`. Never "fix", "update", "wip", "changes".
-- Shell is Git Bash on Windows; the repo path contains `ñ` and spaces — always quote paths. Repo root: `C:\Users\Ivan Quiñola\Documents\Claude_Projects\Test Client`.
+- Shell is Git Bash on Windows; the repo path contains a non-ASCII character and spaces — always quote paths.
 - Work on branch `feat/triage-core`. Pull requests are merged with a **merge commit** (not squash) so the small commits stay visible on `main`.
 
 ## File map
@@ -68,7 +68,7 @@ docs/walkthrough.md           — results table written by `pnpm eval`
 The first local commit contains a CLAUDE.md revision with personal file names. Nothing has been pushed, so fold both existing commits into one.
 
 ```bash
-cd "/c/Users/Ivan Quiñola/Documents/Claude_Projects/Test Client"
+cd "<repo>"
 git status --short            # must be empty
 ROOT=$(git rev-list --max-parents=0 HEAD)
 git reset --soft "$ROOT"
