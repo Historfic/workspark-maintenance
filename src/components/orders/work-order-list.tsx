@@ -7,10 +7,7 @@ import type { Status } from "@/lib/triage/schema";
 import { WorkOrderCard } from "./work-order-card";
 import { WorkOrderTableRow } from "./work-order-row";
 
-// Each fixed width fits the widest thing its column ever holds (the Emergency and "Unit unknown"
-// badges, "Electrical" beside its chip, the three-segment status control, "yesterday"); the
-// summary takes the rest, so nothing wraps inside a control and the summary is never squeezed
-// below what is left.
+// Each width fits the widest thing its column holds; the summary takes whatever is left.
 const COLUMNS = [
   { label: "Priority", width: "w-[8.5rem]" },
   { label: "Type", width: "w-[8.5rem]" },

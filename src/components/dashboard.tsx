@@ -76,7 +76,7 @@ export function Dashboard({
   // panels sit side by side above the list, and from `xl` they stack in a left column beside it.
   return (
     <div className="min-h-dvh">
-      <PageHeader right={<LiveIndicator connection={state.connection} tone="dark" />} />
+      <PageHeader right={<LiveIndicator connection={state.connection} />} />
       <main className="mx-auto grid max-w-[96rem] items-start gap-6 p-4 md:grid-cols-2 md:p-6 xl:grid-cols-[20rem_1fr] xl:grid-rows-[auto_1fr]">
         <IntakePanel onCreated={onCreated} />
         <TriageExplainer className="order-last md:order-none xl:col-start-1" />
