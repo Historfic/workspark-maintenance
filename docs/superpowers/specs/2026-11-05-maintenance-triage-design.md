@@ -141,7 +141,7 @@ and every matched rule's floor.
 | Rule | Matches (case-insensitive, word-bounded) | Floor |
 |---|---|---|
 | `gas_odor` | (smell, odor, odour) and "gas" in the same sentence; gas leak; rotten egg; carbon monoxide; CO alarm/detector | Emergency |
-| `water_electrical` | in one sentence: water in motion or in place (leak, drip, flood, pouring, soaked, "water coming through / in / near") together with an electrical fixture (outlet, socket, wiring, breaker, electrical, light, lamp, switch, spark). The bare word "water" ("water heater", "water stain"), "electric" naming an appliance and "light" as a size do not count | Emergency |
+| `water_electrical` | in one sentence: a water word (water, leak, drip, flood, pouring, gushing, spraying, seeping, soaked, puddle, wet, splash) together with an electrical fixture (outlet, socket, wiring, breaker, electrical, light, light fixture, lamp, light/wall switch, electric/breaker/fuse panel, fuse box, spark). Compounds such as "water heater", "water stain", "water bill", "water pressure", "water valve" do not count as water; "electric" naming an appliance, bare "panel" and "switch" as a verb do not count as electrical | Emergency |
 | `fire_smoke` | fire, flames, smoke, burning smell, sparking, or a smoke/fire alarm going off. Naming the alarm is not evidence: "smoke detector battery is low" or chirping does not match | Emergency |
 | `flooding` | flooding, flooded, burst pipe, water pouring or gushing | Emergency |
 | `no_heat_cold` | (no heat; heat/heater/heating/furnace/boiler/radiator + not / isn't / stopped / broken / out / off) together with (freezing, cold) | High |
