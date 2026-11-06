@@ -4,10 +4,13 @@ import type Vapi from "@vapi-ai/web";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { callReducer, describeCallError, type CallState } from "@/lib/voice/call-state";
 
+function ignoreStopFailure(): void {}
+
 export function useVapiCall(publicKey: string, assistantId: string) {
   const [state, dispatch] = useReducer(callReducer, { kind: "idle" } satisfies CallState);
   const [now, setNow] = useState(0);
   const clientRef = useRef<Vapi | null>(null);
+  const cancelledRef = useRef(false);
 
   useEffect(() => {
     if (state.kind !== "live") return;
@@ -15,7 +18,17 @@ export function useVapiCall(publicKey: string, assistantId: string) {
     return () => clearInterval(timer);
   }, [state.kind]);
 
-  useEffect(() => () => void clientRef.current?.stop(), []);
+  const stopClient = useCallback(() => {
+    clientRef.current?.stop().catch(ignoreStopFailure);
+  }, []);
+
+  useEffect(
+    () => () => {
+      cancelledRef.current = true;
+      stopClient();
+    },
+    [stopClient],
+  );
 
   const connect = useCallback(async (): Promise<Vapi> => {
     if (clientRef.current) return clientRef.current;
@@ -33,16 +46,26 @@ export function useVapiCall(publicKey: string, assistantId: string) {
   }, [publicKey]);
 
   const start = useCallback(() => {
+    cancelledRef.current = false;
     dispatch({ type: "start" });
     connect()
-      .then((client) => client.start(assistantId))
+      .then((client) => (cancelledRef.current ? null : client.start(assistantId)))
+      .then((call) => {
+        if (cancelledRef.current) {
+          stopClient();
+          dispatch({ type: "ended" });
+        } else if (call === null) {
+          dispatch({ type: "failed", message: describeCallError(undefined) });
+        }
+      })
       .catch((error: unknown) => dispatch({ type: "failed", message: describeCallError(error) }));
-  }, [assistantId, connect]);
+  }, [assistantId, connect, stopClient]);
 
   const hangUp = useCallback(() => {
+    cancelledRef.current = true;
     dispatch({ type: "hang-up" });
-    void clientRef.current?.stop();
-  }, []);
+    stopClient();
+  }, [stopClient]);
 
   const elapsedMs = state.kind === "live" ? Math.max(0, now - state.startedAt) : 0;
   return { state, elapsedMs, start, hangUp };

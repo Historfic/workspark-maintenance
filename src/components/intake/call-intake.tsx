@@ -3,8 +3,8 @@
 import { PhoneDisconnectIcon, PhoneIcon, WarningCircleIcon } from "@phosphor-icons/react/dist/ssr";
 import { Button } from "@/components/ui/button";
 import { useVapiCall } from "@/hooks/use-vapi-call";
-import { MAX_CALL_SECONDS } from "@/lib/vapi/assistant-config";
 import { formatElapsed, type CallState } from "@/lib/voice/call-state";
+import { MAX_CALL_SECONDS } from "@/lib/voice/constants";
 
 const PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY ?? "";
 const ASSISTANT_ID = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID ?? "";
@@ -18,7 +18,7 @@ function statusText(state: CallState): string {
     case "connecting":
       return "Connecting…";
     case "live":
-      return state.agentSpeaking ? "Agent speaking" : "Listening";
+      return "Call connected";
     case "ending":
       return "Ending call…";
     case "ended":
@@ -73,20 +73,20 @@ function CallControls({ publicKey, assistantId }: { publicKey: string; assistant
         </div>
       )}
       <p className="flex items-start gap-2 text-xs text-ink-muted">
-        {live && (
-          <span
-            aria-hidden
-            className="mt-1 size-2.5 shrink-0 rounded-full bg-accent motion-safe:animate-pulse"
-          />
-        )}
         {state.kind === "error" && <WarningCircleIcon size={16} aria-hidden className="shrink-0" />}
-        <span role="status" className={live ? "text-ink" : undefined}>
+        <span role="status" className={live ? "sr-only" : undefined}>
           {statusText(state)}
         </span>
         {live && (
-          <span className="ml-auto shrink-0 font-mono text-ink tabular-nums">
-            {formatElapsed(elapsedMs)} / {LIMIT}
-          </span>
+          <>
+            <span aria-hidden className="flex items-center gap-2 text-ink">
+              <span className="size-2.5 shrink-0 rounded-full bg-accent motion-safe:animate-pulse" />
+              {state.agentSpeaking ? "Agent speaking" : "Listening"}
+            </span>
+            <span className="ml-auto shrink-0 font-mono text-ink tabular-nums">
+              {formatElapsed(elapsedMs)} / {LIMIT}
+            </span>
+          </>
         )}
       </p>
     </div>

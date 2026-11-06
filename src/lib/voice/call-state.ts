@@ -32,9 +32,10 @@ export function callReducer(state: CallState, event: CallEvent): CallState {
     case "hang-up":
       return state.kind === "live" || state.kind === "connecting" ? { kind: "ending" } : state;
     case "ended":
-      return state.kind === "error" ? state : { kind: "ended" };
+      return state.kind === "live" || state.kind === "ending" ? { kind: "ended" } : state;
     case "failed":
-      return { kind: "error", message: event.message };
+      if (state.kind === "ending") return { kind: "ended" };
+      return state.kind === "error" ? state : { kind: "error", message: event.message };
   }
 }
 

@@ -3,18 +3,29 @@ import { SECRET_HEADER } from "@/lib/api/vapi-webhook";
 import { requireEnv } from "@/lib/env";
 import {
   buildAssistantConfig,
+  CREDENTIAL_NAME,
   isOwnAssistant,
+  isOwnCredential,
   isOwnPhoneNumber,
   PHONE_NAME,
 } from "@/lib/vapi/assistant-config";
 
 const API = "https://api.vapi.ai";
+const WEBHOOK_PATH = "/api/webhooks/vapi";
+const SECRET_ENV_KEYS = ["VAPI_WEBHOOK_SECRET", "VAPI_PRIVATE_KEY"];
 const idSchema = z.object({ id: z.string().min(1) });
 const phoneSchema = z.object({
   id: z.string().min(1),
   number: z.string().optional(),
   status: z.string().optional(),
 });
+
+function redactSecrets(text: string): string {
+  return SECRET_ENV_KEYS.reduce((redacted, key) => {
+    const secret = process.env[key];
+    return secret ? redacted.split(secret).join("[redacted]") : redacted;
+  }, text);
+}
 
 async function vapi(path: string, init: { method: string; body?: unknown }): Promise<unknown> {
   const response = await fetch(`${API}${path}`, {
@@ -27,7 +38,9 @@ async function vapi(path: string, init: { method: string; body?: unknown }): Pro
   });
   const text = await response.text();
   if (!response.ok) {
-    throw new Error(`${init.method} ${path} answered ${response.status}: ${text.slice(0, 300)}`);
+    throw new Error(
+      `${init.method} ${path} answered ${response.status}: ${redactSecrets(text).slice(0, 300)}`,
+    );
   }
   const data: unknown = text ? JSON.parse(text) : null;
   return data;
@@ -35,13 +48,14 @@ async function vapi(path: string, init: { method: string; body?: unknown }): Pro
 
 function serverUrlArg(): string {
   const index = process.argv.indexOf("--server-url");
-  const url = index === -1 ? undefined : process.argv[index + 1];
-  if (!url?.startsWith("https://")) {
+  const raw = index === -1 ? undefined : process.argv[index + 1];
+  const url = raw === undefined ? null : URL.parse(raw);
+  if (url?.protocol !== "https:" || url.pathname !== WEBHOOK_PATH) {
     throw new Error(
-      "Pass --server-url https://<host>/api/webhooks/vapi (Vapi needs a public https URL).",
+      `Pass --server-url https://<host>${WEBHOOK_PATH} (Vapi needs a public https URL).`,
     );
   }
-  return url;
+  return url.href;
 }
 
 async function syncCredential(): Promise<string> {
@@ -53,13 +67,19 @@ async function syncCredential(): Promise<string> {
   };
   const existing = process.env.VAPI_CREDENTIAL_ID;
   if (existing) {
+    const current = await vapi(`/credential/${existing}`, { method: "GET" });
+    if (!isOwnCredential(current)) {
+      throw new Error(
+        `Credential ${existing} is not this app's webhook credential. Refusing to change it.`,
+      );
+    }
     await vapi(`/credential/${existing}`, { method: "PATCH", body: { authenticationPlan } });
     return existing;
   }
   const created = idSchema.parse(
     await vapi("/credential", {
       method: "POST",
-      body: { provider: "webhook", name: "workspark-maintenance webhook", authenticationPlan },
+      body: { provider: "webhook", name: CREDENTIAL_NAME, authenticationPlan },
     }),
   );
   return created.id;
