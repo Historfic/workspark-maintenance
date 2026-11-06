@@ -1933,7 +1933,7 @@ EOF
 
 **Interfaces:**
 - `page.tsx` (server): `export const dynamic = "force-dynamic"`; loads `listWorkOrders(createClient(url, publishableKey))` and renders `<Dashboard initialOrders={rows} />`.
-- `Dashboard({ initialOrders })` (client): owns `useWorkOrdersFeed`, filter state, open drawer id; implements `onStatusChange` (dispatch `setStatus` → PATCH → revert and rethrow on failure) and `onCreated` (dispatch `upsert` with `fromRealtime: false` for each created order); renders header, two-column layout (`lg:grid-cols-[22rem_1fr]`), `aria-live` region.
+- `Dashboard({ initialOrders, initialNow })` (client): owns `useWorkOrdersFeed`, filter state, open drawer id, a `now` clock seeded from the server's `initialNow` (hydration-safe) and ticking every 30 s; implements `onStatusChange` (dispatch `setStatus` → PATCH → revert and rethrow on failure) and `onCreated` (dispatch `upsert` with `fromRealtime: false` for each created order); renders header, two-column layout (`lg:grid-cols-[22rem_1fr]`), and an `aria-live` region whose text is cleared and re-set on every `state.announcement` (shape `{ seq, text } | null` after Task 3's reducer change) so repeated identical announcements are each read out.
 - `LiveIndicator({ connection, lastEventAt })` — "● Live" / "Reconnecting…" / "Connecting…".
 
 - [ ] **Step 1: Header and indicator**
@@ -2010,16 +2010,28 @@ async function patchStatus(id: string, status: Status): Promise<void> {
   if (!response.ok) throw new Error(`Could not save the status (${response.status}).`);
 }
 
-export function Dashboard({ initialOrders }: { initialOrders: WorkOrderRow[] }) {
+export function Dashboard({ initialOrders, initialNow }: { initialOrders: WorkOrderRow[]; initialNow: string }) {
   const { state, dispatch } = useWorkOrdersFeed(initialOrders);
   const [filter, setFilter] = useState<FilterKey>("all");
   const [openId, setOpenId] = useState<string | null>(null);
-  const [now, setNow] = useState(() => new Date());
+  // The server's clock seeds `now` so the first client render matches the HTML it hydrates.
+  const [now, setNow] = useState(() => new Date(initialNow));
+  const [liveText, setLiveText] = useState("");
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 30_000);
     return () => clearInterval(timer);
   }, []);
+
+  // Clearing and re-setting the live region guarantees a DOM change per announcement, so two
+  // tickets with identical text are both read out.
+  useEffect(() => {
+    if (!state.announcement) return;
+    const { text } = state.announcement;
+    setLiveText("");
+    const timer = setTimeout(() => setLiveText(text), 50);
+    return () => clearTimeout(timer);
+  }, [state.announcement]);
 
   const counts = useMemo(() => countFilters(state.orders), [state.orders]);
   const openOrder = state.orders.find((order) => order.id === openId) ?? null;
@@ -2062,7 +2074,7 @@ export function Dashboard({ initialOrders }: { initialOrders: WorkOrderRow[] }) 
         </section>
       </main>
       <p className="sr-only" aria-live="polite">
-        {state.announcement ?? ""}
+        {liveText}
       </p>
       <OrderDrawer order={openOrder} onClose={() => setOpenId(null)} />
     </div>
@@ -2087,7 +2099,7 @@ export default async function Home() {
     auth: { persistSession: false, autoRefreshToken: false },
   });
   const orders = await listWorkOrders(client);
-  return <Dashboard initialOrders={orders} />;
+  return <Dashboard initialOrders={orders} initialNow={new Date().toISOString()} />;
 }
 ```
 
