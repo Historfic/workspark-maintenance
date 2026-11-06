@@ -108,6 +108,28 @@ describe("runTriage", () => {
     });
   });
 
+  it("reads the whole report for a single issue even when the quote omits the hazard word", async () => {
+    const { extract } = scriptedExtractor([
+      makeExtraction([
+        makeIssue({
+          issue_type: "Gas",
+          priority: "Medium",
+          priority_rationale: "Caller is unsure it is serious.",
+          unit: "7A",
+          area: "kitchen, near the stove",
+          summary: "Odd smell near the stove.",
+          source_quote: "weird smell near the stove",
+        }),
+      ]),
+    ]);
+    const { tickets } = await runTriage(input("r4"), extract);
+    expect(tickets[0]).toMatchObject({
+      source_quote: "weird smell near the stove",
+      priority: "Emergency",
+      priority_source: "rule:gas_odor",
+    });
+  });
+
   it("retries once after an extraction failure", async () => {
     const { extract, callCount } = scriptedExtractor([
       new ExtractionError("timeout", "api"),
@@ -134,6 +156,19 @@ describe("runTriage", () => {
       issue_type: "Other",
       priority: "High",
       priority_source: "fallback",
+      needs_followup: true,
+    });
+  });
+
+  it("runs the safety rules on the fallback ticket when extraction fails twice", async () => {
+    const { extract } = scriptedExtractor([new ExtractionError("timeout", "api")]);
+    const { report, tickets } = await runTriage(input("r4"), extract);
+    expect(report.extraction_status).toBe("fallback");
+    expect(tickets[0]).toMatchObject({
+      issue_type: "Other",
+      priority: "Emergency",
+      priority_source: "rule:gas_odor",
+      priority_reason: expect.stringContaining("gas odor"),
       needs_followup: true,
     });
   });

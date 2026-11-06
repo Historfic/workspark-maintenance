@@ -73,6 +73,35 @@ describe("matchRules on review round 2 cases", () => {
   });
 });
 
+describe("matchRules on review round 3 cases", () => {
+  it.each([
+    "My electric water heater stopped working.",
+    "There's a water stain on the wall panel in the hallway",
+    "The kitchen faucet drips. The hallway light flickers.",
+    "Smoke detector battery is low",
+  ])("does not escalate: %s", (text) => {
+    expect(names(text)).toEqual([]);
+  });
+
+  it.each([
+    ["Water is coming through the ceiling light fixture in the bathroom", "water_electrical"],
+    [
+      "The smoke alarm went off because there's smoke everywhere and it keeps beeping",
+      "fire_smoke",
+    ],
+    ["The fire alarm keeps beeping and I can see flames in the kitchen", "fire_smoke"],
+    ["The boiler is out and it's freezing", "no_heat_cold"],
+    ["The radiator is broken and it's cold", "no_heat_cold"],
+  ])("escalates: %s", (text, rule) => {
+    expect(names(text)).toContain(rule);
+  });
+
+  it("keeps the brief's results for reports 1 and 3", () => {
+    expect(names(sampleText("r1"))).toEqual(["water_electrical"]);
+    expect(names(sampleText("r3"))).toEqual([]);
+  });
+});
+
 describe("applySafetyRules", () => {
   it("raises a calm model priority to the rule's floor", () => {
     expect(

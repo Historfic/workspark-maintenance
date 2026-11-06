@@ -32,7 +32,7 @@ export function normalizeUnit(raw: string): string {
 
 export function unitAppearsIn(unit: string, report: string): boolean {
   const target = normalizeUnit(unit);
-  if (target.length === 0) return false;
+  if (!/\d/.test(target)) return false;
   const tokens = report.toUpperCase().match(/[A-Z0-9]+(?:-[A-Z0-9]+)?/g) ?? [];
   return tokens.some((token) => token.replace(/-/g, "") === target);
 }

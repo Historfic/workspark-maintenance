@@ -1,6 +1,7 @@
 import { groundExtraction } from "./ground";
 import { PROMPT_VERSION } from "./prompt";
-import { applySafetyRules } from "./rules";
+import { applySafetyRules, strongestRule } from "./rules";
+import { higherPriority, type Priority } from "./schema";
 import {
   ExtractionError,
   type Extractor,
@@ -14,6 +15,9 @@ import {
 const MAX_ATTEMPTS = 2;
 
 export const FALLBACK_SUMMARY = "Needs manual review: automatic extraction failed.";
+const FALLBACK_PRIORITY: Priority = "High";
+const FALLBACK_REASON =
+  "Automatic extraction failed, so a person needs to read the original report.";
 
 type ReportBase = Pick<
   ReportDraft,
@@ -32,8 +36,11 @@ function reportBase(input: TriageInput): ReportBase {
 
 function buildResult(input: TriageInput, extracted: ExtractorResult): TriageResult {
   const grounded = groundExtraction(extracted.output, input.text);
+  // A lone issue owns the whole report, so a quote that stops short of the hazard word cannot
+  // hide it. With several issues, a grounded quote keeps each issue's hazards to itself.
+  const soleIssue = grounded.issues.length === 1;
   const tickets = grounded.issues.map((issue, position): TicketDraft => {
-    const evidence = issue.source_quote ?? input.text;
+    const evidence = soleIssue ? input.text : (issue.source_quote ?? input.text);
     const outcome = applySafetyRules(
       { priority: issue.priority, rationale: issue.priority_rationale },
       `${evidence} ${issue.summary}`,
@@ -72,6 +79,7 @@ function buildResult(input: TriageInput, extracted: ExtractorResult): TriageResu
 }
 
 function buildFallback(input: TriageInput, error: ExtractionError | null): TriageResult {
+  const rule = strongestRule(input.text);
   return {
     report: {
       ...reportBase(input),
@@ -87,11 +95,10 @@ function buildFallback(input: TriageInput, error: ExtractionError | null): Triag
       {
         position: 0,
         issue_type: "Other",
-        priority: "High",
+        priority: rule === null ? FALLBACK_PRIORITY : higherPriority(FALLBACK_PRIORITY, rule.floor),
         model_priority: null,
-        priority_source: "fallback",
-        priority_reason:
-          "Automatic extraction failed, so a person needs to read the original report.",
+        priority_source: rule === null ? "fallback" : `rule:${rule.name}`,
+        priority_reason: rule === null ? FALLBACK_REASON : rule.reason,
         model_rationale: null,
         unit: null,
         area: null,

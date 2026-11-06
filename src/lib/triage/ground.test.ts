@@ -15,6 +15,15 @@ describe("unit grounding", () => {
     expect(unitAppearsIn("3A", sampleText("r2"))).toBe(false);
     expect(unitAppearsIn("2", sampleText("r5"))).toBe(false);
   });
+
+  it("needs a digit before a stray letter can pass as a unit", () => {
+    expect(unitAppearsIn("A", sampleText("r3"))).toBe(false);
+    expect(unitAppearsIn("I", sampleText("r4"))).toBe(false);
+    expect(unitAppearsIn("4B", sampleText("r1"))).toBe(true);
+    expect(unitAppearsIn("12C", sampleText("r3"))).toBe(true);
+    expect(unitAppearsIn("7A", sampleText("r4"))).toBe(true);
+    expect(unitAppearsIn("2D", sampleText("r5"))).toBe(true);
+  });
 });
 
 describe("quote grounding", () => {

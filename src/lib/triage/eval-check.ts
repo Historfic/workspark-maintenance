@@ -37,6 +37,9 @@ export function checkSample(sample: SampleReport, result: TriageResult): string[
     if (got.needs_followup !== want.needs_followup) {
       failures.push(`${want.issue_type} needs_followup ${String(got.needs_followup)}`);
     }
+    if (want.unit === null && !got.missing_fields.includes("unit_number")) {
+      failures.push(`${want.issue_type} missing_fields lacks unit_number`);
+    }
     if (want.priority_source && got.priority_source !== want.priority_source) {
       failures.push(
         `${want.issue_type} priority source ${got.priority_source}, expected ${want.priority_source}`,

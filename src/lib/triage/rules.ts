@@ -16,22 +16,28 @@ export interface RuleOutcome {
 const SMELL = /\b(smell|smells|smelled|smelling|odou?rs?)\b/i;
 const GAS = /\bgas\b/i;
 const GAS_DIRECT = /\b(gas leak|leaking gas|rotten eggs?|carbon monoxide|co (alarm|detector))\b/i;
-const WATER = /\b(leak\w*|water|drip\w*|flood\w*)\b/i;
+// Water that is moving or sitting somewhere. The bare word is not enough: it also names
+// fixtures ("water heater") and dry traces ("water stain").
+const WATER_CONTACT =
+  /\b(leak\w*|drip\w*|flood\w*|pouring|gushing|spraying|seeping|soak\w*|puddl\w*|wet|water (is |was )?(coming|getting|running|pooling|spilling|in|inside|on|onto|into|near|around|behind|under|over|through|down))\b/i;
+// Electrical fixtures. "electric" naming an appliance ("electric water heater") and "light"
+// describing a size ("a light drip") are not fixtures.
 const ELECTRICAL =
-  /\b(outlets?|sockets?|electrical|electric|wiring|wires?|breakers?|panel|sparks?|sparking)\b/i;
+  /\b(outlets?|sockets?|wiring|wires?|breakers?|fuse box|sparks?|sparking|electric(al)?(?!\s+(water heater|heater|stove|oven|range|kettle|blanket|fireplace|bill))|lights?(?!\s+(leak|drip|trickl|flood|spray|mist|rain)\w*)|(lighting|ceiling) fixtures?|lamps?|(light |wall )?switch(es)?(?!\s+(on|off)\b)|ceiling fans?)\b/i;
 const FIRE =
-  /\b(fire(?!\s+(extinguisher|drill|door|escape|code|safety|department))|burning smell|smells? (like )?burning|sparks?|sparking)\b/i;
+  /\b(fire(?!\s+(extinguisher|drill|door|escape|code|safety|department))|flames?|burning smell|smells? (like )?burning|sparks?|sparking)\b/i;
 const SMOKE = /\b(smoke|smoky)\b/i;
-// Global and lazy so every "smoke/fire alarm ... beeping" clause can be cut out of a text
-// before FIRE and SMOKE run on what is left; use only with String#replace.
-const SMOKE_ALARM_CHIRP = /\b(smoke|fire) (detector|alarm)s?\b[^.!?]*?\b(chirp\w*|beep\w*)/gi;
+// Naming a smoke or fire alarm is not evidence of smoke or fire; the alarm sounding is.
+// ALARM_DEVICE is global for String#replace only.
+const ALARM_DEVICE = /\b(smoke|fire) (detector|alarm)s?\b/gi;
+const ALARM_SOUNDING =
+  /\b(smoke|fire) (detector|alarm)s?\b[^.!?]{0,40}?\b(going off|went off|goes off|sounding|triggered|activated|blaring)\b/i;
 const FLOODING = /\b(flood(ed|ing)?|burst pipe|pipe (has )?burst|water (is )?(pouring|gushing))\b/i;
 const HEAT_OUT =
-  /\bno heat\b|\b(?<!water\s)(heat|heater|heating|furnace)\b[^.!?]{0,30}?\b(not|isn['’]t|stopped|broken|out|won['’]t|doesn['’]t|died)\b/i;
+  /\bno heat\b|\b(?<!water\s)(heat|heater|heating|furnace|boiler|radiators?)\b[^.!?]{0,30}?\b(not|isn['’]t|stopped|broken|broke|out|off|won['’]t|doesn['’]t|died|dead)\b/i;
 const COLD = /\b(freezing|cold|frigid)\b/i;
 
 const sentences = (text: string) => text.split(/[.!?\n]+/);
-const withoutAlarmChirps = (text: string) => text.replace(SMOKE_ALARM_CHIRP, "");
 
 export const SAFETY_RULES: readonly SafetyRule[] = [
   {
@@ -45,14 +51,16 @@ export const SAFETY_RULES: readonly SafetyRule[] = [
     name: "water_electrical",
     floor: "Emergency",
     reason: "Water is reaching an electrical fixture: shock and fire risk.",
-    test: (text) => WATER.test(text) && ELECTRICAL.test(text),
+    test: (text) =>
+      sentences(text).some((part) => WATER_CONTACT.test(part) && ELECTRICAL.test(part)),
   },
   {
     name: "fire_smoke",
     floor: "Emergency",
     reason: "Fire, smoke, or sparking reported.",
     test: (text) => {
-      const report = withoutAlarmChirps(text);
+      if (ALARM_SOUNDING.test(text)) return true;
+      const report = text.replace(ALARM_DEVICE, "");
       return FIRE.test(report) || SMOKE.test(report);
     },
   },
@@ -74,23 +82,27 @@ export function matchRules(text: string): SafetyRule[] {
   return SAFETY_RULES.filter((rule) => rule.test(text));
 }
 
+export function strongestRule(text: string): SafetyRule | null {
+  const matched = matchRules(text);
+  if (matched.length === 0) return null;
+  return matched.reduce((best, rule) =>
+    priorityRank(rule.floor) > priorityRank(best.floor) ? rule : best,
+  );
+}
+
 export function applySafetyRules(
   model: { priority: Priority; rationale: string },
   text: string,
 ): RuleOutcome {
-  const matched = matchRules(text);
   const fromModel: RuleOutcome = {
     priority: model.priority,
     source: "model",
     reason: model.rationale,
   };
-  if (matched.length === 0) return fromModel;
-
-  const strongest = matched.reduce((best, rule) =>
-    priorityRank(rule.floor) > priorityRank(best.floor) ? rule : best,
-  );
-  if (priorityRank(model.priority) > priorityRank(strongest.floor)) return fromModel;
-
+  const strongest = strongestRule(text);
+  if (strongest === null || priorityRank(model.priority) > priorityRank(strongest.floor)) {
+    return fromModel;
+  }
   return {
     priority: higherPriority(model.priority, strongest.floor),
     source: `rule:${strongest.name}`,
