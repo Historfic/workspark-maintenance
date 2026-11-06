@@ -40,10 +40,12 @@ Rafael's machine setup checklist: `docs/handoff/SETUP-NEW-DESKTOP.md`.
    a real inbound phone number, and a "Call intake" button on the dashboard using the Vapi Web SDK
    (so reviewers outside the US can try it). Both post the end-of-call report to
    `/api/webhooks/vapi` → same extraction pipeline. Cap call duration (~2 min) to limit spend.
-   Rafael's Vapi org already has an assistant "Amy" — never modify it; create a new one.
-   The org's existing public key is **unrestricted**. Before deploying, create a dedicated public
-   key restricted to this project's assistant and to the Vercel domain + localhost, and use that
-   for `NEXT_PUBLIC_VAPI_PUBLIC_KEY` in Vercel.
+   **Vapi org (changed 2026-11-07, Rafael's choice):** the app uses Rafael's business org, which
+   holds live client assistants and phone numbers. Only create and update this project's own
+   assistant, named **"test"** (found by its stored ID, never by name), and one free Vapi number for
+   it. Never modify, delete or reattach any other assistant or phone number in that org. The public
+   key Rafael created for this app must be **restricted** to the "test" assistant and to the Vercel
+   domain + localhost before it goes into `NEXT_PUBLIC_VAPI_PUBLIC_KEY` in Vercel.
 3. **GitHub.** Account **`Historfic`** (Rafael B. Bashan; there is no GitHub user "raffymcfee" —
    that is only the email). Public repo **`Historfic/workspark-maintenance`** — not yet created; get
    Rafael's explicit go-ahead before creating it or pushing. Commit identity
