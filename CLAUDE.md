@@ -186,6 +186,15 @@ VAPI_WEBHOOK_SECRET=            # verifies end-of-call webhooks
 RATE_LIMIT_SALT=                # hashes client IPs for the intake rate limit
 ```
 
+## Deployment
+
+- Public repo: https://github.com/Historfic/workspark-maintenance (CI: GitHub Actions on push to
+  `main` and on pull requests).
+- Production: https://workspark-maintenance.vercel.app (Vercel project `workspark-maintenance`,
+  functions in `icn1`, connected to the GitHub repo; `main` deploys to production, PRs get previews).
+  Server env vars live in Vercel; `DATABASE_URL` and `VAPI_PRIVATE_KEY` stay local (scripts only).
+  Note: `vercel deploy --prod` is deprecated in CLI 65 — use `--environment production`.
+
 ## Setup state — this machine (Windows, PowerShell + Git Bash)
 
 Supabase project for this app: `zjzcwgwaipzbednuakun`, region **ap-northeast-2 (Seoul)** — not East
