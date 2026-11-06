@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { TriageStore } from "@/lib/db/store";
 import type { TriageResult } from "@/lib/triage/types";
 import { makeExtraction, makeIssue, scriptedExtractor } from "@/test/fixtures";
@@ -28,11 +28,12 @@ const CALL = {
   },
 };
 
-function setup(saveResult: "saved" | "duplicate" = "saved") {
+function setup(saveResult: "saved" | "duplicate" | "fails" = "saved") {
   const saved: TriageResult[] = [];
   const tasks: Array<() => Promise<void>> = [];
   const store: TriageStore = {
     saveTriage: vi.fn(async (result: TriageResult) => {
+      if (saveResult === "fails") throw new Error("database unavailable");
       saved.push(result);
       return saveResult === "duplicate"
         ? null
@@ -82,6 +83,10 @@ describe("secretMatches", () => {
 });
 
 describe("POST /api/webhooks/vapi", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("rejects a missing or wrong secret without doing any work", async () => {
     const { deps, tasks } = setup();
     expect((await handleVapiWebhook(post(CALL, null), deps)).status).toBe(401);
@@ -89,7 +94,8 @@ describe("POST /api/webhooks/vapi", () => {
     expect(tasks).toHaveLength(0);
   });
 
-  it("acknowledges other server messages and ignores them", async () => {
+  it("acknowledges other server messages and ignores them quietly", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const { deps, tasks } = setup();
     const response = await handleVapiWebhook(post({ message: { type: "status-update" } }), deps);
     expect(response.status).toBe(200);
@@ -99,6 +105,24 @@ describe("POST /api/webhooks/vapi", () => {
       reason: "not_end_of_call",
     });
     expect(tasks).toHaveLength(0);
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it("warns about an end-of-call report of the wrong shape without logging it", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { deps, tasks } = setup();
+    const body = {
+      message: {
+        type: "end-of-call-report",
+        call: { id: 42 },
+        customer: { number: "+14155554567" },
+      },
+    };
+    const response = await handleVapiWebhook(post(body), deps);
+    expect(await response.json()).toEqual({ received: true, action: "ignored", reason: "invalid" });
+    expect(tasks).toHaveLength(0);
+    expect(warn).toHaveBeenCalledOnce();
+    expect(JSON.stringify(warn.mock.calls)).not.toContain("4567");
   });
 
   it("answers at once and triages the call afterwards", async () => {
@@ -124,5 +148,13 @@ describe("POST /api/webhooks/vapi", () => {
     const { deps, tasks } = setup("duplicate");
     await handleVapiWebhook(post(CALL), deps);
     await expect(tasks[0]?.()).resolves.toBeUndefined();
+  });
+
+  it("logs the call id and rethrows when the deferred triage fails", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const { deps, tasks } = setup("fails");
+    await handleVapiWebhook(post(CALL), deps);
+    await expect(tasks[0]?.()).rejects.toThrow("database unavailable");
+    expect(error).toHaveBeenCalledWith(expect.stringContaining("call-abc"), expect.any(Error));
   });
 });

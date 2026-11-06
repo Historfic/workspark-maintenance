@@ -63,6 +63,31 @@ describe("parseServerMessage", () => {
     expect(parsed.kind === "report" && parsed.report.callerLast4).toBe("0199");
   });
 
+  it("accepts the nulls Vapi sends for unset fields", () => {
+    const parsed = parseServerMessage(
+      endOfCall({
+        call: { id: "call-null", type: "inboundPhoneCall", customer: { number: "+14155550123" } },
+        customer: null,
+        artifact: {
+          messages: [
+            { role: "assistant", message: null },
+            { role: "tool_calls" },
+            { role: "user", message: "Hi, this is 4B. The bathroom ceiling is leaking." },
+          ],
+        },
+      }),
+    );
+    expect(parsed).toEqual({
+      kind: "report",
+      report: {
+        callId: "call-null",
+        source: "phone",
+        callerLast4: "0123",
+        transcript: "Caller: Hi, this is 4B. The bathroom ceiling is leaking.",
+      },
+    });
+  });
+
   it("ignores other server messages", () => {
     expect(
       parseServerMessage({ message: { type: "status-update", status: "in-progress" } }),
