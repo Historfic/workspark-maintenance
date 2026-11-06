@@ -2,7 +2,23 @@ import type { ReactNode } from "react";
 import type { ReportRow, WorkOrderRow } from "@/lib/db/types";
 import { quoteRange } from "@/lib/dashboard/highlight";
 import { prioritySourceLabel, SOURCE_LABEL } from "@/lib/dashboard/labels";
+import type { CallerUrgency } from "@/lib/triage/schema";
 import { PriorityBadge } from "./priority-badge";
+
+const URGENCY_LABEL: Record<CallerUrgency, string> = {
+  none_stated: "nothing about urgency",
+  low: "not urgent",
+  medium: "fairly urgent",
+  high: "urgent",
+  emergency: "an emergency",
+};
+
+const MISSING_LABEL: Record<string, string> = {
+  unit_number: "Unit number not given — follow up with the caller.",
+  issue_detail: "Problem too vague to dispatch — follow up with the caller.",
+  unit_not_in_report: "The model suggested a unit the report never mentions; it was discarded.",
+  quote_not_in_report: "The model's quote was not verbatim; the whole report was used instead.",
+};
 
 export function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -57,7 +73,7 @@ export function PriorityExplanation({ order, report }: { order: WorkOrderRow; re
             {report.caller_urgency_quote ? (
               <q>{report.caller_urgency_quote}</q>
             ) : (
-              report.caller_stated_urgency
+              URGENCY_LABEL[report.caller_stated_urgency]
             )}
           </dd>
         </div>
@@ -68,16 +84,10 @@ export function PriorityExplanation({ order, report }: { order: WorkOrderRow; re
 
 export function MissingInfo({ order }: { order: WorkOrderRow }) {
   if (order.missing_fields.length === 0 && order.grounding_notes.length === 0) return null;
-  const labels: Record<string, string> = {
-    unit_number: "Unit number not given — follow up with the caller.",
-    issue_detail: "Problem too vague to dispatch — follow up with the caller.",
-    unit_not_in_report: "The model suggested a unit the report never mentions; it was discarded.",
-    quote_not_in_report: "The model's quote was not verbatim; the whole report was used instead.",
-  };
   return (
     <ul className="list-disc space-y-1 pl-5">
       {[...order.missing_fields, ...order.grounding_notes].map((key) => (
-        <li key={key}>{labels[key] ?? key}</li>
+        <li key={key}>{MISSING_LABEL[key] ?? key}</li>
       ))}
     </ul>
   );
@@ -125,7 +135,7 @@ export function AuditTrail({ report }: { report: ReportRow }) {
 export function RawOutput({ report }: { report: ReportRow }) {
   if (!report.llm_output) return null;
   return (
-    <details className="group">
+    <details>
       <summary className="cursor-pointer text-sm text-accent">Show the model’s raw output</summary>
       <pre className="mt-2 max-h-72 overflow-auto rounded border border-line bg-bg p-3 font-mono text-xs leading-5">
         {JSON.stringify(report.llm_output, null, 2)}

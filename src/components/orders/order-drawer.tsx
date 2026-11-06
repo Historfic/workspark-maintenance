@@ -33,6 +33,10 @@ export function OrderDrawer({
 }) {
   const [loaded, setLoaded] = useState<{ key: string; result: Loaded } | null>(null);
   const [attempt, setAttempt] = useState(0);
+  // The parent clears `order` to close; the sheet keeps the last ticket so it has content while
+  // it slides out.
+  const [shown, setShown] = useState(order);
+  if (order && order !== shown) setShown(order);
   const reportId = order?.report_id ?? null;
   const key = `${reportId ?? ""}#${attempt}`;
   const bundle: Bundle =
@@ -74,17 +78,17 @@ export function OrderDrawer({
           className="fixed inset-y-0 right-0 flex w-full max-w-xl flex-col overflow-y-auto bg-surface shadow-[0_0_0_1px_var(--color-line),-12px_0_32px_-16px_rgba(15,23,42,0.35)] data-[state=open]:animate-[slide-in_200ms_ease-out] data-[state=closed]:animate-[slide-out_140ms_ease-in]"
           aria-describedby={undefined}
         >
-          {order && (
+          {shown && (
             <>
               <header className="flex items-start justify-between gap-4 border-b border-line p-5">
                 <div>
                   <div className="flex items-center gap-2">
-                    <PriorityBadge priority={order.priority} />
-                    <span className="text-sm text-ink-muted">{order.issue_type}</span>
-                    <UnitChip unit={order.unit} />
+                    <PriorityBadge priority={shown.priority} />
+                    <span className="text-sm text-ink-muted">{shown.issue_type}</span>
+                    <UnitChip unit={shown.unit} />
                   </div>
                   <Dialog.Title className="mt-2 text-lg leading-snug font-semibold">
-                    {order.summary}
+                    {shown.summary}
                   </Dialog.Title>
                 </div>
                 <Dialog.Close asChild>
@@ -95,7 +99,8 @@ export function OrderDrawer({
               </header>
               <div className="space-y-4 p-5">
                 {bundle.kind === "loading" && (
-                  <div aria-busy className="space-y-3">
+                  <div role="status" className="space-y-3">
+                    <span className="sr-only">Loading report…</span>
                     <div className="h-4 w-3/4 animate-pulse rounded bg-bg" />
                     <div className="h-4 w-full animate-pulse rounded bg-bg" />
                     <div className="h-4 w-5/6 animate-pulse rounded bg-bg" />
@@ -124,18 +129,18 @@ export function OrderDrawer({
                 {bundle.kind === "ready" && (
                   <>
                     <Section title="What the caller said">
-                      <ReportText text={bundle.report.raw_text} quote={order.source_quote} />
+                      <ReportText text={bundle.report.raw_text} quote={shown.source_quote} />
                     </Section>
                     <Section title="Priority">
-                      <PriorityExplanation order={order} report={bundle.report} />
+                      <PriorityExplanation order={shown} report={bundle.report} />
                     </Section>
-                    {(order.missing_fields.length > 0 || order.grounding_notes.length > 0) && (
+                    {(shown.missing_fields.length > 0 || shown.grounding_notes.length > 0) && (
                       <Section title="Follow-up and corrections">
-                        <MissingInfo order={order} />
+                        <MissingInfo order={shown} />
                       </Section>
                     )}
                     <Section title="Other tickets from this report">
-                      <Siblings siblings={bundle.siblings} currentId={order.id} />
+                      <Siblings siblings={bundle.siblings} currentId={shown.id} />
                     </Section>
                     <Section title="Audit trail">
                       <AuditTrail report={bundle.report} />
