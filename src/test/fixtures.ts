@@ -1,3 +1,4 @@
+import type { WorkOrderRow } from "@/lib/db/types";
 import { SAMPLE_REPORTS } from "@/lib/triage/samples";
 import type { ExtractedIssue, Extraction } from "@/lib/triage/schema";
 import type { Extractor } from "@/lib/triage/types";
@@ -42,4 +43,29 @@ export function scriptedExtractor(steps: Array<Extraction | Error>): {
     return { output: step, model: "claude-fable-5-1", latencyMs: 1234 };
   };
   return { extract, callCount: () => calls };
+}
+
+export function makeWorkOrderRow(overrides: Partial<WorkOrderRow> = {}): WorkOrderRow {
+  return {
+    id: "11111111-1111-4111-8111-111111111111",
+    report_id: "22222222-2222-4222-8222-222222222222",
+    position: 0,
+    issue_type: "Plumbing",
+    priority: "Medium",
+    model_priority: "Medium",
+    priority_source: "model",
+    priority_reason: "Impairs normal use of the kitchen.",
+    model_rationale: "Impairs normal use of the kitchen.",
+    unit: "12C",
+    area: "kitchen",
+    summary: "Kitchen sink is clogged.",
+    source_quote: "The kitchen sink is clogged",
+    missing_fields: [],
+    grounding_notes: [],
+    needs_followup: false,
+    status: "New",
+    created_at: "2026-11-06T10:00:00.000Z",
+    updated_at: "2026-11-06T10:00:00.000Z",
+    ...overrides,
+  };
 }

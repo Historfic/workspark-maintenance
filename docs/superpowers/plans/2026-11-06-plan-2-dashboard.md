@@ -1176,7 +1176,7 @@ EOF
 - `labels.ts`: `PRIORITY_TONE: Record<Priority, BadgeTone>`, `STATUS_LABEL: Record<Status, string>`, `SOURCE_LABEL: Record<Source, string>`, `prioritySourceLabel(source: PrioritySource): string` ("Model" | "Rule: gas odor" | "Manual review").
 - `PriorityBadge({ priority })`, `TypeIcon({ type })` (Phosphor icon per issue type, `aria-hidden`), `UnitChip({ unit })` (mono text, or amber "Unit unknown" badge).
 - `StatusControl({ order, onChange(id, status): Promise<void> })` — Radix RadioGroup rendered as a 3-segment control; optimistic: calls `onChange`, which the parent implements by dispatching `setStatus`, PATCHing, and reverting on failure; shows an inline error text under the control when the parent rejects.
-- `FilterTabs({ value, counts, onChange })` — Radix Tabs list only (panels rendered by the parent).
+- `FilterTabs({ value, counts, onChange, children })` — Radix Tabs: the list of triggers plus one `Tabs.Content` (`value={value}`, `forceMount`) wrapping `children`, so each trigger's `aria-controls` resolves to the list below.
 - `WorkOrderList({ orders, recentIds, filter, onStatusChange, onOpen(id) })` — desktop table (`<table>` with proper `<th scope="col">`), mobile cards (`md:hidden` / `hidden md:table`), empty state.
 
 - [ ] **Step 1: Labels and small badges**
@@ -1784,7 +1784,7 @@ export function RawOutput({ report }: { report: ReportRow }) {
 ```tsx
 "use client";
 
-import { XIcon } from "@phosphor-icons/react";
+import { WarningCircleIcon, XIcon } from "@phosphor-icons/react";
 import { Dialog } from "radix-ui";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -1856,8 +1856,11 @@ export function OrderDrawer({ order, onClose }: { order: WorkOrderRow | null; on
                   </div>
                 )}
                 {bundle.kind === "error" && (
-                  <div role="alert" className="rounded border border-emergency/40 p-3 text-sm">
-                    <p>{bundle.message}</p>
+                  <div role="alert" className="rounded border border-line bg-bg p-3 text-sm">
+                    <p className="flex items-center gap-2">
+                      <WarningCircleIcon size={18} aria-hidden className="shrink-0 text-ink-muted" />
+                      {bundle.message}
+                    </p>
                     <Button variant="secondary" size="sm" className="mt-2" onClick={() => setAttempt((n) => n + 1)}>
                       Retry
                     </Button>
@@ -1933,7 +1936,7 @@ EOF
 
 **Interfaces:**
 - `page.tsx` (server): `export const dynamic = "force-dynamic"`; loads `listWorkOrders(createClient(url, publishableKey))` and renders `<Dashboard initialOrders={rows} />`.
-- `Dashboard({ initialOrders })` (client): owns `useWorkOrdersFeed`, filter state, open drawer id; implements `onStatusChange` (dispatch `setStatus` → PATCH → revert and rethrow on failure) and `onCreated` (dispatch `upsert` with `fromRealtime: false` for each created order); renders header, two-column layout (`lg:grid-cols-[22rem_1fr]`), `aria-live` region.
+- `Dashboard({ initialOrders, initialNow })` (client): owns `useWorkOrdersFeed`, filter state, open drawer id, a `now` clock seeded from the server's `initialNow` (hydration-safe) and ticking every 30 s; implements `onStatusChange` (dispatch `setStatus` → PATCH → revert and rethrow on failure) and `onCreated` (dispatch `upsert` with `fromRealtime: false` for each created order); renders header, two-column layout (`lg:grid-cols-[22rem_1fr]`), and an `aria-live` region whose text is cleared and re-set on every `state.announcement` (shape `{ seq, text } | null` after Task 3's reducer change) so repeated identical announcements are each read out.
 - `LiveIndicator({ connection, lastEventAt })` — "● Live" / "Reconnecting…" / "Connecting…".
 
 - [ ] **Step 1: Header and indicator**
@@ -2010,16 +2013,28 @@ async function patchStatus(id: string, status: Status): Promise<void> {
   if (!response.ok) throw new Error(`Could not save the status (${response.status}).`);
 }
 
-export function Dashboard({ initialOrders }: { initialOrders: WorkOrderRow[] }) {
+export function Dashboard({ initialOrders, initialNow }: { initialOrders: WorkOrderRow[]; initialNow: string }) {
   const { state, dispatch } = useWorkOrdersFeed(initialOrders);
   const [filter, setFilter] = useState<FilterKey>("all");
   const [openId, setOpenId] = useState<string | null>(null);
-  const [now, setNow] = useState(() => new Date());
+  // The server's clock seeds `now` so the first client render matches the HTML it hydrates.
+  const [now, setNow] = useState(() => new Date(initialNow));
+  const [liveText, setLiveText] = useState("");
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 30_000);
     return () => clearInterval(timer);
   }, []);
+
+  // Clearing and re-setting the live region guarantees a DOM change per announcement, so two
+  // tickets with identical text are both read out.
+  useEffect(() => {
+    if (!state.announcement) return;
+    const { text } = state.announcement;
+    setLiveText("");
+    const timer = setTimeout(() => setLiveText(text), 50);
+    return () => clearTimeout(timer);
+  }, [state.announcement]);
 
   const counts = useMemo(() => countFilters(state.orders), [state.orders]);
   const openOrder = state.orders.find((order) => order.id === openId) ?? null;
@@ -2048,21 +2063,22 @@ export function Dashboard({ initialOrders }: { initialOrders: WorkOrderRow[] }) 
           <h2 id="orders-heading" className="sr-only">
             Work orders
           </h2>
-          <FilterTabs value={filter} counts={counts} onChange={setFilter} />
-          <div className="mt-4">
-            <WorkOrderList
-              orders={state.orders}
-              recentIds={state.recentIds}
-              filter={filter}
-              now={now}
-              onStatusChange={onStatusChange}
-              onOpen={setOpenId}
-            />
-          </div>
+          <FilterTabs value={filter} counts={counts} onChange={setFilter}>
+            <div className="mt-4">
+              <WorkOrderList
+                orders={state.orders}
+                recentIds={state.recentIds}
+                filter={filter}
+                now={now}
+                onStatusChange={onStatusChange}
+                onOpen={setOpenId}
+              />
+            </div>
+          </FilterTabs>
         </section>
       </main>
       <p className="sr-only" aria-live="polite">
-        {state.announcement ?? ""}
+        {liveText}
       </p>
       <OrderDrawer order={openOrder} onClose={() => setOpenId(null)} />
     </div>
@@ -2087,7 +2103,7 @@ export default async function Home() {
     auth: { persistSession: false, autoRefreshToken: false },
   });
   const orders = await listWorkOrders(client);
-  return <Dashboard initialOrders={orders} />;
+  return <Dashboard initialOrders={orders} initialNow={new Date().toISOString()} />;
 }
 ```
 

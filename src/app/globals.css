@@ -1,1 +1,96 @@
 @import "tailwindcss";
+
+@theme {
+  --color-bg: #f6f5f1;
+  --color-surface: #ffffff;
+  --color-ink: #0f172a;
+  --color-ink-muted: #475569;
+  --color-line: #e4e2dc;
+  --color-accent: #0369a1;
+  --color-accent-hover: #02507c;
+  --color-emergency: #b91c1c;
+  --color-followup: #b45309;
+  --color-followup-bg: #fef3c7;
+  --color-followup-line: #d97706;
+  --color-done: #15803d;
+  --color-done-bg: #dcfce7;
+
+  --font-sans: var(--font-fira-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-fira-code), ui-monospace, "SFMono-Regular", monospace;
+
+  --radius: 4px;
+
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.06), 0 2px 8px rgb(15 23 42 / 0.05);
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  body {
+    @apply bg-bg text-ink font-sans antialiased;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@keyframes row-arrive {
+  from {
+    background-color: color-mix(in srgb, var(--color-accent) 14%, var(--color-surface));
+  }
+  to {
+    background-color: var(--color-surface);
+  }
+}
+.row-arrive {
+  animation: row-arrive 1.2s ease-out 1;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes slide-in {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes slide-out {
+  from {
+    transform: none;
+    opacity: 1;
+  }
+  to {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+}
