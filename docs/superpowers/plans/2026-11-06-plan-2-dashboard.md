@@ -1176,7 +1176,7 @@ EOF
 - `labels.ts`: `PRIORITY_TONE: Record<Priority, BadgeTone>`, `STATUS_LABEL: Record<Status, string>`, `SOURCE_LABEL: Record<Source, string>`, `prioritySourceLabel(source: PrioritySource): string` ("Model" | "Rule: gas odor" | "Manual review").
 - `PriorityBadge({ priority })`, `TypeIcon({ type })` (Phosphor icon per issue type, `aria-hidden`), `UnitChip({ unit })` (mono text, or amber "Unit unknown" badge).
 - `StatusControl({ order, onChange(id, status): Promise<void> })` — Radix RadioGroup rendered as a 3-segment control; optimistic: calls `onChange`, which the parent implements by dispatching `setStatus`, PATCHing, and reverting on failure; shows an inline error text under the control when the parent rejects.
-- `FilterTabs({ value, counts, onChange })` — Radix Tabs list only (panels rendered by the parent).
+- `FilterTabs({ value, counts, onChange, children })` — Radix Tabs: the list of triggers plus one `Tabs.Content` (`value={value}`, `forceMount`) wrapping `children`, so each trigger's `aria-controls` resolves to the list below.
 - `WorkOrderList({ orders, recentIds, filter, onStatusChange, onOpen(id) })` — desktop table (`<table>` with proper `<th scope="col">`), mobile cards (`md:hidden` / `hidden md:table`), empty state.
 
 - [ ] **Step 1: Labels and small badges**
@@ -2063,17 +2063,18 @@ export function Dashboard({ initialOrders, initialNow }: { initialOrders: WorkOr
           <h2 id="orders-heading" className="sr-only">
             Work orders
           </h2>
-          <FilterTabs value={filter} counts={counts} onChange={setFilter} />
-          <div className="mt-4">
-            <WorkOrderList
-              orders={state.orders}
-              recentIds={state.recentIds}
-              filter={filter}
-              now={now}
-              onStatusChange={onStatusChange}
-              onOpen={setOpenId}
-            />
-          </div>
+          <FilterTabs value={filter} counts={counts} onChange={setFilter}>
+            <div className="mt-4">
+              <WorkOrderList
+                orders={state.orders}
+                recentIds={state.recentIds}
+                filter={filter}
+                now={now}
+                onStatusChange={onStatusChange}
+                onOpen={setOpenId}
+              />
+            </div>
+          </FilterTabs>
         </section>
       </main>
       <p className="sr-only" aria-live="polite">
