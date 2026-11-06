@@ -13,19 +13,24 @@ export interface CreateReportDeps {
   maxPerMinute: number;
 }
 
-const bodySchema = z.object({ text: z.string().max(MAX_REPORT_CHARS * 4) });
+const TOO_LONG = `Reports are limited to ${MAX_REPORT_CHARS} characters.`;
+
+const bodySchema = z.object({
+  text: z.string().max(MAX_REPORT_CHARS * 4, { message: "too_long" }),
+});
 
 export async function handleCreateReport(req: Request, deps: CreateReportDeps): Promise<Response> {
   const body = bodySchema.safeParse(await readJson(req));
-  if (!body.success) return errorResponse("invalid_input", 'Send JSON like {"text": "..."}.');
+  if (!body.success) {
+    const tooBig = body.error.issues.some((issue) => issue.code === "too_big");
+    return errorResponse("invalid_input", tooBig ? TOO_LONG : 'Send JSON like {"text": "..."}.');
+  }
 
   const normalized = normalizeReportText(body.data.text, MAX_REPORT_CHARS);
   if (!normalized.ok) {
     return errorResponse(
       "invalid_input",
-      normalized.reason === "empty"
-        ? "The report is empty."
-        : `Reports are limited to ${MAX_REPORT_CHARS} characters.`,
+      normalized.reason === "empty" ? "The report is empty." : TOO_LONG,
     );
   }
 

@@ -16,14 +16,14 @@ export interface RuleOutcome {
 const SMELL = /\b(smell|smells|smelled|smelling|odou?rs?)\b/i;
 const GAS = /\bgas\b/i;
 const GAS_DIRECT = /\b(gas leak|leaking gas|rotten eggs?|carbon monoxide|co (alarm|detector))\b/i;
-// Water that is moving or sitting somewhere. The bare word is not enough: it also names
-// fixtures ("water heater") and dry traces ("water stain").
-const WATER_CONTACT =
-  /\b(leak\w*|drip\w*|flood\w*|pouring|gushing|spraying|seeping|soak\w*|puddl\w*|wet|water (is |was )?(coming|getting|running|pooling|spilling|in|inside|on|onto|into|near|around|behind|under|over|through|down))\b/i;
-// Electrical fixtures. "electric" naming an appliance ("electric water heater") and "light"
-// describing a size ("a light drip") are not fixtures.
+// Water on the move or sitting somewhere. Bare "water" counts, except in compounds that name
+// a fixture ("water heater"), a dry trace ("water stain") or a utility ("water bill").
+const WATER =
+  /\b(leak\w*|drip\w*|flood\w*|pouring|gushing|spraying|seeping|soak\w*|puddl\w*|wet|splash\w*|water(?!\s+(heaters?|stains?|bills?|pressure|softeners?|filters?|meters?|bottles?|valves?|mains?)\b))\b/i;
+// Electrical fixtures. "electric" naming an appliance ("electric water heater"), "light"
+// describing a size ("a light drip") and "switch" as a verb are not fixtures.
 const ELECTRICAL =
-  /\b(outlets?|sockets?|wiring|wires?|breakers?|fuse box|sparks?|sparking|electric(al)?(?!\s+(water heater|heater|stove|oven|range|kettle|blanket|fireplace|bill))|lights?(?!\s+(leak|drip|trickl|flood|spray|mist|rain)\w*)|(lighting|ceiling) fixtures?|lamps?|(light |wall )?switch(es)?(?!\s+(on|off)\b)|ceiling fans?)\b/i;
+  /\b(outlets?|sockets?|wiring|wires?|breakers?|fuse box|sparks?|sparking|electric(al)?(?!\s+(water heater|heater|stove|oven|range|kettle|blanket|fireplace|bill))|lights?(?!\s+(leak|drip|trickl|flood|spray|mist|rain)\w*)|(lighting|ceiling) fixtures?|lamps?|(light|wall) switch(es)?|ceiling fans?)\b/i;
 const FIRE =
   /\b(fire(?!\s+(extinguisher|drill|door|escape|code|safety|department))|flames?|burning smell|smells? (like )?burning|sparks?|sparking)\b/i;
 const SMOKE = /\b(smoke|smoky)\b/i;
@@ -51,8 +51,7 @@ export const SAFETY_RULES: readonly SafetyRule[] = [
     name: "water_electrical",
     floor: "Emergency",
     reason: "Water is reaching an electrical fixture: shock and fire risk.",
-    test: (text) =>
-      sentences(text).some((part) => WATER_CONTACT.test(part) && ELECTRICAL.test(part)),
+    test: (text) => sentences(text).some((part) => WATER.test(part) && ELECTRICAL.test(part)),
   },
   {
     name: "fire_smoke",

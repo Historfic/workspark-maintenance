@@ -78,12 +78,22 @@ describe("POST /api/reports", () => {
     ["missing text", {}],
     ["non-JSON body", "text=hello"],
     ["blank text", { text: "  \n\t " }],
-    ["text over the limit", { text: "a".repeat(2001) }],
-    ["oversized body", { text: "a".repeat(20_000) }],
   ])("rejects %s with 400", async (_label, body) => {
     const { deps, extractor } = setup();
     const response = await handleCreateReport(post(body), deps);
     expect(response.status).toBe(400);
+    expect(extractor.callCount()).toBe(0);
+  });
+
+  it.each([
+    ["text over the limit", { text: "a".repeat(2001) }],
+    ["oversized body", { text: "a".repeat(20_000) }],
+  ])("rejects %s with 400 and names the limit", async (_label, body) => {
+    const { deps, extractor } = setup();
+    const response = await handleCreateReport(post(body), deps);
+    expect(response.status).toBe(400);
+    const json = (await response.json()) as { error: { message: string } };
+    expect(json.error.message).toContain("limited to 2000 characters");
     expect(extractor.callCount()).toBe(0);
   });
 

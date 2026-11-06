@@ -102,6 +102,23 @@ describe("matchRules on review round 3 cases", () => {
   });
 });
 
+describe("matchRules on water near electrical fixtures", () => {
+  it.each([
+    "Water got into the outlet behind the washing machine.",
+    "There's water all over the outlet by the sink.",
+    "Water splashed onto the outlet and now it's buzzing.",
+    "Water's coming through the light fixture in the bathroom.",
+    "Water came through the ceiling light last night.",
+    "Water keeps coming out of the light in the hallway.",
+  ])("escalates: %s", (text) => {
+    expect(names(text)).toContain("water_electrical");
+  });
+
+  it("does not count the verb 'switch' as an electrical fixture", () => {
+    expect(names("I had to switch the main water valve because the sink is leaking.")).toEqual([]);
+  });
+});
+
 describe("applySafetyRules", () => {
   it("raises a calm model priority to the rule's floor", () => {
     expect(
