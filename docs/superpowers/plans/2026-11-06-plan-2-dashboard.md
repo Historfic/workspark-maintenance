@@ -24,7 +24,7 @@ Spec: `docs/superpowers/specs/2026-11-05-maintenance-triage-design.md` §7 (dash
 - TypeScript strict + `noUncheckedIndexedAccess`; files under ~200 lines, one job each; no narrating comments; no blanket try/catch (one boundary per fetch call that converts a failed response into UI state).
 - Tests: Vitest on the pure view-model modules (no DOM library). Components are verified in Task 8 by clicking through the running app with `agent-browser`, with the exact observations listed there. No snapshot tests.
 - Before every commit: `pnpm format`; `git diff --cached` checked for secrets; `.env.local` never staged. Commit trailer `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>`; imperative subject ≤ 72 chars; body explains *why* when non-obvious.
-- Shell is Git Bash on Windows; always quote the repo path `C:\Users\Ivan Quiñola\Documents\Claude_Projects\Test Client`. A dev server may already be running on :3000 — reuse it, never start a second one.
+- Shell is Git Bash on Windows; always quote the repo path, which contains a non-ASCII character. A dev server may already be running on :3000 — reuse it, never start a second one.
 
 ## File map
 
@@ -68,7 +68,7 @@ docs/screenshots/*.png                  — captured in Task 8
 - [ ] **Step 1: Branch and install**
 
 ```bash
-cd "/c/Users/Ivan Quiñola/Documents/Claude_Projects/Test Client"
+cd "<repo>"
 git checkout main && git pull && git checkout -b feat/dashboard
 pnpm add radix-ui@1.8.1 @phosphor-icons/react@2.1.10 clsx@2.1.1
 ```

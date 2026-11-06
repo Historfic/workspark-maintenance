@@ -19,7 +19,8 @@ Rafael's machine setup checklist: `docs/handoff/SETUP-NEW-DESKTOP.md`.
 - [x] Brief read, plan proposed (2026-11-05, on the previous desktop)
 - [x] Open decisions below answered by Rafael (2026-11-05, new desktop)
 - [x] Machine setup: CLIs installed, accounts authed, `.env.local` filled and every key verified (2026-11-05)
-- [ ] Before submitting: rotate the keys Rafael pasted into chat (Anthropic, Vapi private, Supabase secret, DB password)
+- [x] Anthropic and Supabase secret keys rotated before the first deploy (2026-11-06)
+- [ ] Before submitting: rotate the local-only Vapi private key and database password
 - [x] Design spec written to `docs/superpowers/specs/` and approved (2026-11-05)
 - [x] Plan 1 (triage core) written to `docs/superpowers/plans/` and approved (2026-11-05).
 - [x] Plan 2 (dashboard) written and approved (2026-11-06); runs after Plan 1 merges.
