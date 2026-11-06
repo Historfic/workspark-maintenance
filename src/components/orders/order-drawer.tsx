@@ -34,10 +34,11 @@ export function OrderDrawer({
   const [loaded, setLoaded] = useState<{ key: string; result: Loaded } | null>(null);
   const [attempt, setAttempt] = useState(0);
   // The parent clears `order` to close; the sheet keeps the last ticket so it has content while
-  // it slides out.
+  // it slides out. The bundle is keyed on that retained ticket too, so the loaded report stays
+  // matched (and the skeleton stays hidden) for the whole exit animation.
   const [shown, setShown] = useState(order);
   if (order && order !== shown) setShown(order);
-  const reportId = order?.report_id ?? null;
+  const reportId = shown?.report_id ?? null;
   const key = `${reportId ?? ""}#${attempt}`;
   const bundle: Bundle =
     loaded !== null && loaded.key === key ? loaded.result : { kind: "loading" };
