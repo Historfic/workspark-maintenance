@@ -19,12 +19,14 @@
     "test:watch": "vitest",
     "eval": "tsx --conditions=react-server --env-file=.env.local scripts/eval.ts",
     "db:migrate": "tsx --env-file=.env.local scripts/db-migrate.ts",
-    "seed:demo": "tsx --conditions=react-server --env-file=.env.local scripts/seed-demo.ts"
+    "seed:demo": "tsx --conditions=react-server --env-file=.env.local scripts/seed-demo.ts",
+    "vapi:setup": "tsx --env-file=.env.local scripts/vapi-setup.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "1.5.0",
     "@phosphor-icons/react": "2.1.10",
     "@supabase/supabase-js": "2.119.0",
+    "@vapi-ai/web": "3.0.1",
     "clsx": "2.1.1",
     "next": "16.4.5",
     "radix-ui": "1.8.1",

@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { parseWorkOrderRow } from "@/lib/db/row-schemas";
 import type { WorkOrderRow } from "@/lib/db/types";
 import { MAX_REPORT_CHARS } from "@/lib/triage/normalize";
+import { CallIntake } from "./call-intake";
 import { IntakeResult } from "./intake-result";
 import { SampleChips } from "./sample-chips";
 
@@ -118,6 +119,7 @@ export function IntakePanel({ onCreated }: { onCreated: (orders: WorkOrderRow[])
         <p className="mb-2 text-xs text-ink-muted">Try one of the sample reports</p>
         <SampleChips disabled={busy} onPick={(sample) => setText(sample)} />
       </div>
+      <CallIntake />
       <div role="status" aria-live="polite" className="mt-4 min-h-6">
         {phase.kind === "done" && <IntakeResult orders={phase.orders} />}
       </div>
