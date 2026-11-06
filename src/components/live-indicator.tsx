@@ -3,18 +3,35 @@
 import { clsx } from "clsx";
 import type { Connection } from "@/lib/dashboard/feed-reducer";
 
+type Tone = "light" | "dark";
+
 const LABEL: Record<Connection, string> = {
   connecting: "Connecting…",
   live: "Live",
   reconnecting: "Reconnecting…",
 };
 
-export function LiveIndicator({ connection }: { connection: Connection }) {
+const TEXT: Record<Tone, string> = {
+  light: "text-ink-muted",
+  dark: "text-white/80",
+};
+
+const IDLE_DOT: Record<Tone, string> = {
+  light: "bg-ink-muted/50",
+  dark: "bg-white/40",
+};
+
+export function LiveIndicator({
+  connection,
+  tone = "light",
+}: {
+  connection: Connection;
+  tone?: Tone;
+}) {
   return (
     <span
-      className="inline-flex items-center gap-2 text-sm text-ink-muted"
+      className={clsx("inline-flex shrink-0 items-center gap-2 text-sm", TEXT[tone])}
       role="status"
-      aria-live="polite"
     >
       <span
         aria-hidden
@@ -24,7 +41,7 @@ export function LiveIndicator({ connection }: { connection: Connection }) {
             ? "bg-done"
             : connection === "reconnecting"
               ? "bg-followup-line"
-              : "bg-ink-muted/50",
+              : IDLE_DOT[tone],
         )}
       />
       {LABEL[connection]}

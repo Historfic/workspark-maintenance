@@ -26,7 +26,7 @@ export function WorkOrderCard({
   return (
     <li
       className={clsx(
-        "rounded border border-line bg-surface p-4",
+        "bg-surface p-4",
         order.needs_followup && "border-l-[3px] border-l-followup-line",
         recent && "row-arrive",
       )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { WarningCircleIcon } from "@phosphor-icons/react/dist/ssr";
+import { ChatTextIcon, WarningCircleIcon } from "@phosphor-icons/react/dist/ssr";
 import { useRef, useState, type FormEvent } from "react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -69,13 +69,24 @@ export function IntakePanel({ onCreated }: { onCreated: (orders: WorkOrderRow[])
   }
 
   return (
-    <section aria-labelledby="intake-heading" className="rounded border border-line bg-surface p-4">
-      <h2
-        id="intake-heading"
-        className="text-xs font-semibold tracking-wide text-ink-muted uppercase"
-      >
-        New report
-      </h2>
+    <section
+      aria-labelledby="intake-heading"
+      className="rounded border border-line border-t-[3px] border-t-accent bg-surface p-4 shadow-card"
+    >
+      <div className="flex items-center gap-2.5">
+        <span
+          aria-hidden
+          className="flex size-8 shrink-0 items-center justify-center rounded border border-line bg-bg"
+        >
+          <ChatTextIcon size={18} className="text-accent" />
+        </span>
+        <h2
+          id="intake-heading"
+          className="text-xs font-semibold tracking-wide text-ink-muted uppercase"
+        >
+          New report
+        </h2>
+      </div>
       <form onSubmit={handleSubmit} className="mt-3 space-y-3">
         <div>
           <label htmlFor="report-text" className="block text-sm font-medium">

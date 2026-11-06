@@ -59,7 +59,7 @@ export function StatusControl({
             key={status}
             value={status}
             className={clsx(
-              "cursor-pointer rounded font-medium transition-colors",
+              "cursor-pointer rounded font-medium whitespace-nowrap transition-colors",
               SIZE[size],
               status === order.status
                 ? status === "Done"

@@ -24,5 +24,12 @@ const ICON: Record<IssueType, Icon> = {
 
 export function TypeIcon({ type }: { type: IssueType }) {
   const Component = ICON[type];
-  return <Component size={20} aria-hidden className="shrink-0 text-ink-muted" />;
+  return (
+    <span
+      aria-hidden
+      className="inline-flex size-7 shrink-0 items-center justify-center rounded border border-line bg-bg"
+    >
+      <Component size={16} className="text-ink-muted" />
+    </span>
+  );
 }

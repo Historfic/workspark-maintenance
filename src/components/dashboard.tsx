@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { IntakePanel } from "@/components/intake/intake-panel";
+import { TriageExplainer } from "@/components/intake/triage-explainer";
 import { FilterTabs } from "@/components/orders/filter-tabs";
 import { OrderDrawer } from "@/components/orders/order-drawer";
 import { WorkOrderList } from "@/components/orders/work-order-list";
@@ -71,26 +72,30 @@ export function Dashboard({
     for (const row of orders) dispatch({ type: "upsert", row, fromRealtime: false });
   }
 
+  // Phones get the list right under the form; the explainer drops to the end. From `md` the two
+  // panels sit side by side above the list, and from `xl` they stack in a left column beside it.
   return (
     <div className="min-h-dvh">
-      <PageHeader right={<LiveIndicator connection={state.connection} />} />
-      <main className="mx-auto grid max-w-7xl gap-6 p-4 md:p-6 lg:grid-cols-[22rem_1fr]">
+      <PageHeader right={<LiveIndicator connection={state.connection} tone="dark" />} />
+      <main className="mx-auto grid max-w-[96rem] items-start gap-6 p-4 md:grid-cols-2 md:p-6 xl:grid-cols-[20rem_1fr] xl:grid-rows-[auto_1fr]">
         <IntakePanel onCreated={onCreated} />
-        <section aria-labelledby="orders-heading" className="min-w-0">
+        <TriageExplainer className="order-last md:order-none xl:col-start-1" />
+        <section
+          aria-labelledby="orders-heading"
+          className="min-w-0 rounded border border-line bg-surface shadow-card md:col-span-2 xl:col-span-1 xl:col-start-2 xl:row-span-2 xl:row-start-1"
+        >
           <h2 id="orders-heading" className="sr-only">
             Work orders
           </h2>
           <FilterTabs value={filter} counts={counts} onChange={setFilter}>
-            <div className="mt-4">
-              <WorkOrderList
-                orders={state.orders}
-                recentIds={state.recentIds}
-                filter={filter}
-                now={now}
-                onStatusChange={onStatusChange}
-                onOpen={setOpenId}
-              />
-            </div>
+            <WorkOrderList
+              orders={state.orders}
+              recentIds={state.recentIds}
+              filter={filter}
+              now={now}
+              onStatusChange={onStatusChange}
+              onOpen={setOpenId}
+            />
           </FilterTabs>
         </section>
       </main>

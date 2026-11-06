@@ -10,6 +10,8 @@ import { StatusControl } from "./status-control";
 import { TypeIcon } from "./type-icon";
 import { UnitChip } from "./unit-chip";
 
+const CELL = "px-3 py-3.5";
+
 export function WorkOrderTableRow({
   order,
   recent,
@@ -28,30 +30,30 @@ export function WorkOrderTableRow({
   return (
     <tr
       className={clsx(
-        "border-b border-line bg-surface align-top",
+        "border-b border-line bg-surface align-top last:border-b-0",
         order.needs_followup && "border-l-[3px] border-l-followup-line",
         recent && "row-arrive",
       )}
     >
-      <td className="px-3 py-3">
+      <td className={CELL}>
         <PriorityBadge priority={order.priority} />
       </td>
-      <td className="px-3 py-3">
+      <td className={CELL}>
         <span className="flex items-center gap-2">
           <TypeIcon type={order.issue_type} />
-          {order.issue_type}
+          <span className="truncate">{order.issue_type}</span>
         </span>
       </td>
-      <td className="px-3 py-3">
+      <td className={CELL}>
         <UnitChip unit={order.unit} />
       </td>
-      <td className="px-3 py-3">
+      <td className={CELL}>
         <button
           type="button"
           onClick={() => onOpen(order.id)}
-          className="cursor-pointer text-left hover:text-accent hover:underline"
+          className="block w-full cursor-pointer text-left hover:text-accent hover:underline"
         >
-          {order.summary}
+          <span className="line-clamp-2">{order.summary}</span>
         </button>
         {siblingCount > 1 && (
           <span className="mt-1 block text-xs text-ink-muted">
@@ -64,10 +66,15 @@ export function WorkOrderTableRow({
           </Badge>
         )}
       </td>
-      <td className="px-3 py-3">
+      <td className={CELL}>
         <StatusControl order={order} onChange={onStatusChange} />
       </td>
-      <td className="px-3 py-3 text-right font-mono text-sm text-ink-muted tabular-nums whitespace-nowrap">
+      <td
+        className={clsx(
+          CELL,
+          "text-right font-mono text-sm text-ink-muted tabular-nums whitespace-nowrap",
+        )}
+      >
         <time dateTime={order.created_at}>{relativeTime(order.created_at, now)}</time>
       </td>
     </tr>
