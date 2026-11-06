@@ -79,6 +79,7 @@ describe("POST /api/reports", () => {
     ["non-JSON body", "text=hello"],
     ["blank text", { text: "  \n\t " }],
     ["text over the limit", { text: "a".repeat(2001) }],
+    ["oversized body", { text: "a".repeat(20_000) }],
   ])("rejects %s with 400", async (_label, body) => {
     const { deps, extractor } = setup();
     const response = await handleCreateReport(post(body), deps);

@@ -220,9 +220,11 @@ intake_events                                  -- rate limiting; no public acces
 - Realtime publication: `work_orders` (inserts and updates).
 - Functions: `create_report_with_work_orders(report jsonb, orders jsonb)` (one transaction) and
   `check_intake_rate(ip_hash text, max_per_minute int)` (records the event and returns whether it
-  is allowed, atomically). Both `security definer`, executable by `service_role` only.
+  is allowed, atomically). Both `security invoker` with `search_path = ''`, executable by
+  `service_role` only.
 - Migrations live in `supabase/migrations/` and are applied with `pnpm db:migrate`
-  (Supabase CLI `db push --db-url "$DATABASE_URL"`). Load the `supabase` and
+  (a small `pg` script, `scripts/db-migrate.ts`, that records versions in
+  `supabase_migrations.schema_migrations`; the Supabase CLI is not used). Load the `supabase` and
   `postgres-best-practices` skills before writing them.
 
 ## 5. API

@@ -2,7 +2,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { describe, expect, it } from "vitest";
 import { makeExtraction, makeIssue } from "@/test/fixtures";
 import { createExtractor } from "./extract";
-import { SYSTEM_PROMPT } from "./prompt";
+import { buildUserMessage, SYSTEM_PROMPT } from "./prompt";
+import { EXTRACTION_JSON_SCHEMA } from "./schema";
 import { ExtractionError } from "./types";
 
 interface Captured {
@@ -52,10 +53,17 @@ describe("createExtractor", () => {
     expect(request?.headers.get("anthropic-beta")).toContain("server-side-fallback-2026-07-01");
     expect(request?.body).toMatchObject({
       model: "claude-fable-5-1",
+      max_tokens: 8000,
       system: SYSTEM_PROMPT,
       fallbacks: "default",
-      output_config: { effort: "low", format: { type: "json_schema" } },
     });
+    expect(request?.body.output_config).toEqual({
+      effort: "low",
+      format: { type: "json_schema", schema: EXTRACTION_JSON_SCHEMA },
+    });
+    expect(request?.body.messages).toEqual([
+      { role: "user", content: buildUserMessage(call.text, call.source) },
+    ]);
     expect(request?.body).not.toHaveProperty("thinking");
   });
 

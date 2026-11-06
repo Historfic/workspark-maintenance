@@ -14,8 +14,11 @@ export interface TriageStore {
 }
 
 export class StoreError extends Error {
-  constructor(operation: string, cause: { message: string }) {
-    super(`Database ${operation} failed: ${cause.message}`);
+  constructor(
+    operation: string,
+    cause: { message: string; code?: string; details?: string; hint?: string },
+  ) {
+    super(`Database ${operation} failed: ${cause.message}`, { cause });
     this.name = "StoreError";
   }
 }

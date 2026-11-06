@@ -13,7 +13,7 @@ export interface CreateReportDeps {
   maxPerMinute: number;
 }
 
-const bodySchema = z.object({ text: z.string() });
+const bodySchema = z.object({ text: z.string().max(MAX_REPORT_CHARS * 4) });
 
 export async function handleCreateReport(req: Request, deps: CreateReportDeps): Promise<Response> {
   const body = bodySchema.safeParse(await readJson(req));
