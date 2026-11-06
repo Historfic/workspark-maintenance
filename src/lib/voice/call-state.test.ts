@@ -21,9 +21,40 @@ describe("callReducer", () => {
     expect(callReducer(connecting, { type: "start" })).toBe(connecting);
   });
 
+  it("moves a connecting call to ending on hang-up", () => {
+    expect(callReducer({ kind: "connecting" }, { type: "hang-up" })).toEqual({ kind: "ending" });
+  });
+
+  it("ends a live call when the other side hangs up", () => {
+    const live: CallState = { kind: "live", startedAt: 1000, agentSpeaking: false };
+    expect(callReducer(live, { type: "ended" })).toEqual({ kind: "ended" });
+  });
+
+  it("ignores a stale call-end while a new call is still connecting", () => {
+    const connecting: CallState = { kind: "connecting" };
+    expect(callReducer(connecting, { type: "ended" })).toBe(connecting);
+  });
+
+  it("ignores call-end when no call is in progress", () => {
+    const ended: CallState = { kind: "ended" };
+    expect(callReducer(idle, { type: "ended" })).toBe(idle);
+    expect(callReducer(ended, { type: "ended" })).toBe(ended);
+  });
+
   it("keeps the error when the SDK reports call-end after a failure", () => {
     const failed = callReducer({ kind: "connecting" }, { type: "failed", message: "No mic" });
     expect(callReducer(failed, { type: "ended" })).toBe(failed);
+  });
+
+  it("treats a failure reported after the caller hung up as the call ending", () => {
+    expect(callReducer({ kind: "ending" }, { type: "failed", message: "Aborted" })).toEqual({
+      kind: "ended",
+    });
+  });
+
+  it("keeps the first failure message when the SDK reports a second one", () => {
+    const failed: CallState = { kind: "error", message: "No mic" };
+    expect(callReducer(failed, { type: "failed", message: "Generic" })).toBe(failed);
   });
 
   it("can start again after a call ended or failed", () => {

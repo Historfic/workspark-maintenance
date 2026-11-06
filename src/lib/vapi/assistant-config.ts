@@ -1,9 +1,9 @@
 import { z } from "zod";
+import { MAX_CALL_SECONDS } from "@/lib/voice/constants";
 
 export const ASSISTANT_NAME = "test";
 export const APP_TAG = "workspark-maintenance";
 export const PHONE_NAME = "Workspark test line";
-export const MAX_CALL_SECONDS = 120;
 
 const INTAKE_PROMPT = `You answer the maintenance line for a residential building. This is a live phone call, so keep every reply to one or two short sentences.
 

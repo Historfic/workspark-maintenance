@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-  buildAssistantConfig,
-  isOwnAssistant,
-  isOwnPhoneNumber,
-  MAX_CALL_SECONDS,
-} from "./assistant-config";
+import { MAX_CALL_SECONDS } from "@/lib/voice/constants";
+import { buildAssistantConfig, isOwnAssistant, isOwnPhoneNumber } from "./assistant-config";
 
 describe("buildAssistantConfig", () => {
   const config = buildAssistantConfig({
