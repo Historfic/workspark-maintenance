@@ -44,7 +44,8 @@ function buttonLabel(state: CallState): string {
 function CallControls({ publicKey, assistantId }: { publicKey: string; assistantId: string }) {
   const { state, elapsedMs, start, hangUp } = useVapiCall(publicKey, assistantId);
   const live = state.kind === "live";
-  const busy = state.kind === "connecting" || state.kind === "ending";
+  const connecting = state.kind === "connecting";
+  const busy = connecting || state.kind === "ending";
 
   return (
     <div className="space-y-2">
@@ -54,15 +55,22 @@ function CallControls({ publicKey, assistantId }: { publicKey: string; assistant
           End call
         </Button>
       ) : (
-        <Button
-          variant="secondary"
-          className="w-full aria-busy:cursor-progress"
-          aria-busy={busy}
-          onClick={busy ? undefined : start}
-        >
-          <PhoneIcon size={18} aria-hidden />
-          {buttonLabel(state)}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="secondary"
+            className="flex-1 aria-busy:cursor-progress"
+            aria-busy={busy}
+            onClick={busy ? undefined : start}
+          >
+            <PhoneIcon size={18} aria-hidden />
+            {buttonLabel(state)}
+          </Button>
+          {connecting && (
+            <Button variant="ghost" className="shrink-0" onClick={hangUp}>
+              Cancel
+            </Button>
+          )}
+        </div>
       )}
       <p className="flex items-start gap-2 text-xs text-ink-muted">
         {live && (
