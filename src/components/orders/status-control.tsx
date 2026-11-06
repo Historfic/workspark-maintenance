@@ -1,5 +1,6 @@
 "use client";
 
+import { WarningCircleIcon } from "@phosphor-icons/react";
 import { RadioGroup } from "radix-ui";
 import { useState } from "react";
 import { clsx } from "clsx";
@@ -27,6 +28,7 @@ export function StatusControl({
   const [pending, setPending] = useState(false);
 
   async function change(value: string) {
+    if (pending) return;
     const status = STATUSES.find((s) => s === value);
     if (!status || status === order.status) return;
     setError(null);
@@ -45,16 +47,19 @@ export function StatusControl({
       <RadioGroup.Root
         value={order.status}
         onValueChange={change}
-        disabled={pending}
+        aria-busy={pending}
         aria-label={`Status for ${order.issue_type} ticket${order.unit ? ` in ${order.unit}` : ""}`}
-        className="inline-flex rounded border border-line bg-surface p-0.5"
+        className={clsx(
+          "inline-flex rounded border border-line bg-surface p-0.5",
+          pending && "cursor-wait opacity-70",
+        )}
       >
         {STATUSES.map((status) => (
           <RadioGroup.Item
             key={status}
             value={status}
             className={clsx(
-              "cursor-pointer rounded font-medium transition-colors disabled:cursor-wait",
+              "cursor-pointer rounded font-medium transition-colors",
               SIZE[size],
               status === order.status
                 ? status === "Done"
@@ -68,7 +73,12 @@ export function StatusControl({
         ))}
       </RadioGroup.Root>
       {error && (
-        <p role="alert" className="mt-1 text-xs text-emergency">
+        <p role="alert" className="mt-1 text-xs text-ink">
+          <WarningCircleIcon
+            size={14}
+            aria-hidden
+            className="mr-1 inline align-text-bottom text-ink-muted"
+          />
           {error}
         </p>
       )}

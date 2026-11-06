@@ -2,16 +2,19 @@
 
 import { Tabs } from "radix-ui";
 import { clsx } from "clsx";
+import type { ReactNode } from "react";
 import { FILTERS, type FilterKey } from "@/lib/dashboard/filters";
 
 export function FilterTabs({
   value,
   counts,
   onChange,
+  children,
 }: {
   value: FilterKey;
   counts: Record<FilterKey, number>;
   onChange: (key: FilterKey) => void;
+  children: ReactNode;
 }) {
   return (
     <Tabs.Root
@@ -40,6 +43,9 @@ export function FilterTabs({
           </Tabs.Trigger>
         ))}
       </Tabs.List>
+      <Tabs.Content value={value} forceMount>
+        {children}
+      </Tabs.Content>
     </Tabs.Root>
   );
 }
