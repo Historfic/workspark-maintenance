@@ -4,6 +4,7 @@ import { MAX_CALL_SECONDS } from "@/lib/voice/constants";
 export const ASSISTANT_NAME = "test";
 export const APP_TAG = "workspark-maintenance";
 export const PHONE_NAME = "Workspark test line";
+export const CREDENTIAL_NAME = "workspark-maintenance webhook";
 
 const INTAKE_PROMPT = `You answer the maintenance line for a residential building. This is a live phone call, so keep every reply to one or two short sentences.
 
@@ -67,10 +68,19 @@ const ownAssistantSchema = z.object({
 
 const ownPhoneSchema = z.object({ provider: z.literal("vapi"), name: z.literal(PHONE_NAME) });
 
+const ownCredentialSchema = z.object({
+  provider: z.literal("webhook"),
+  name: z.literal(CREDENTIAL_NAME),
+});
+
 export function isOwnAssistant(assistant: unknown): boolean {
   return ownAssistantSchema.safeParse(assistant).success;
 }
 
 export function isOwnPhoneNumber(phone: unknown): boolean {
   return ownPhoneSchema.safeParse(phone).success;
+}
+
+export function isOwnCredential(credential: unknown): boolean {
+  return ownCredentialSchema.safeParse(credential).success;
 }

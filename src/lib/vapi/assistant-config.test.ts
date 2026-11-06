@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { MAX_CALL_SECONDS } from "@/lib/voice/constants";
-import { buildAssistantConfig, isOwnAssistant, isOwnPhoneNumber } from "./assistant-config";
+import {
+  buildAssistantConfig,
+  CREDENTIAL_NAME,
+  isOwnAssistant,
+  isOwnCredential,
+  isOwnPhoneNumber,
+} from "./assistant-config";
 
 describe("buildAssistantConfig", () => {
   const config = buildAssistantConfig({
@@ -39,6 +45,17 @@ describe("isOwnAssistant", () => {
     expect(isOwnAssistant({ name: "test" })).toBe(false);
     expect(isOwnAssistant({ name: "test", metadata: { app: "something-else" } })).toBe(false);
     expect(isOwnAssistant(null)).toBe(false);
+  });
+});
+
+describe("isOwnCredential", () => {
+  it("recognises only the webhook credential this app created", () => {
+    expect(CREDENTIAL_NAME).toBe("workspark-maintenance webhook");
+    expect(isOwnCredential({ provider: "webhook", name: CREDENTIAL_NAME })).toBe(true);
+    expect(isOwnCredential({ provider: "webhook", name: "Client webhook" })).toBe(false);
+    expect(isOwnCredential({ provider: "twilio", name: CREDENTIAL_NAME })).toBe(false);
+    expect(isOwnCredential({ provider: "webhook" })).toBe(false);
+    expect(isOwnCredential(null)).toBe(false);
   });
 });
 
