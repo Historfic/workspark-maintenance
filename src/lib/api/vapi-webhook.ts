@@ -45,8 +45,19 @@ export async function handleVapiWebhook(req: Request, deps: VapiWebhookDeps): Pr
   }
   const parsed = parseServerMessage(await readJson(req));
   if (parsed.kind === "ignored") {
+    if (parsed.reason === "invalid") {
+      console.warn("Vapi webhook payload did not match the expected shape; ignored.");
+    }
     return Response.json({ received: true, action: "ignored", reason: parsed.reason });
   }
-  deps.defer(() => triageCall(parsed.report, deps));
+  deps.defer(() =>
+    triageCall(parsed.report, deps).catch((error: unknown) => {
+      console.error(
+        `Vapi call ${parsed.report.callId} could not be triaged or saved; replay it from the Vapi dashboard.`,
+        error,
+      );
+      throw error;
+    }),
+  );
   return Response.json({ received: true, action: "queued" });
 }

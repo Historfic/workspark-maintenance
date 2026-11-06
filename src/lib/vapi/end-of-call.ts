@@ -12,7 +12,7 @@ export type ParsedServerMessage =
   | { kind: "report"; report: VapiCallReport }
   | { kind: "ignored"; reason: "invalid" | "not_end_of_call" | "no_caller_speech" };
 
-const customerSchema = z.object({ number: z.string().optional() }).optional();
+const customerSchema = z.object({ number: z.string().nullish() }).nullish();
 
 const envelopeSchema = z.object({ message: z.object({ type: z.string() }) });
 
@@ -20,33 +20,31 @@ const endOfCallSchema = z.object({
   message: z.object({
     call: z.object({
       id: z.string().min(1),
-      type: z.string().optional(),
+      type: z.string().nullish(),
       customer: customerSchema,
     }),
     customer: customerSchema,
     artifact: z
       .object({
-        messages: z
-          .array(z.object({ role: z.string(), message: z.string().optional() }))
-          .optional(),
+        messages: z.array(z.object({ role: z.string(), message: z.string().nullish() })).nullish(),
       })
-      .optional(),
+      .nullish(),
   }),
 });
 
 const SPEAKER: Record<string, string> = { user: "Caller", assistant: "Agent", bot: "Agent" };
 
-export function sourceFromCallType(type: string | undefined): "phone" | "web_call" {
+export function sourceFromCallType(type: string | null | undefined): "phone" | "web_call" {
   return type?.endsWith("PhoneCall") ? "phone" : "web_call";
 }
 
-export function lastFourDigits(number: string | undefined): string | null {
+export function lastFourDigits(number: string | null | undefined): string | null {
   const digits = (number ?? "").replace(/\D/g, "");
   return digits.length >= 4 ? digits.slice(-4) : null;
 }
 
 export function transcriptFromMessages(
-  messages: ReadonlyArray<{ role: string; message?: string }>,
+  messages: ReadonlyArray<{ role: string; message?: string | null }>,
 ): string {
   return messages
     .flatMap(({ role, message }) => {
