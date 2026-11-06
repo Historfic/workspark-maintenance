@@ -10,19 +10,38 @@ describe("feedReducer", () => {
     const next = feedReducer(initialFeedState([a]), { type: "upsert", row: b, fromRealtime: true });
     expect(next.orders.map((r) => r.id)).toEqual(["b", "a"]);
     expect(next.recentIds).toEqual(["b"]);
-    expect(next.announcement).toBe("New Emergency ticket: Gas, unit 7A");
+    expect(next.announcement).toEqual({ seq: 1, text: "New Emergency ticket: Gas, unit 7A" });
   });
 
   it("replaces an existing row in place without re-announcing", () => {
-    const state = initialFeedState([a, b]);
+    const state = feedReducer(initialFeedState([a]), {
+      type: "upsert",
+      row: b,
+      fromRealtime: true,
+    });
+    expect(state.announcement).not.toBeNull();
     const next = feedReducer(state, {
       type: "upsert",
       row: { ...a, status: "Done" },
       fromRealtime: true,
     });
     expect(next.orders.find((r) => r.id === "a")?.status).toBe("Done");
-    expect(next.recentIds).toEqual([]);
-    expect(next.announcement).toBeNull();
+    expect(next.recentIds).toEqual(state.recentIds);
+    expect(next.announcement).toEqual(state.announcement);
+    expect(next.announcementSeq).toBe(state.announcementSeq);
+  });
+
+  it("re-announces identical text under a new sequence number", () => {
+    const twin = makeWorkOrderRow({
+      id: "c",
+      priority: "Emergency",
+      issue_type: "Gas",
+      unit: "7A",
+    });
+    const first = feedReducer(initialFeedState([]), { type: "upsert", row: b, fromRealtime: true });
+    const second = feedReducer(first, { type: "upsert", row: twin, fromRealtime: true });
+    expect(first.announcement).toEqual({ seq: 1, text: "New Emergency ticket: Gas, unit 7A" });
+    expect(second.announcement).toEqual({ seq: 2, text: "New Emergency ticket: Gas, unit 7A" });
   });
 
   it("does not mark rows recent when the insert came from this tab", () => {

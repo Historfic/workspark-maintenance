@@ -4,10 +4,16 @@ import { sortWorkOrders } from "./ordering";
 
 export type Connection = "connecting" | "live" | "reconnecting";
 
+export interface Announcement {
+  seq: number;
+  text: string;
+}
+
 export interface FeedState {
   orders: WorkOrderRow[];
   recentIds: string[];
-  announcement: string | null;
+  announcement: Announcement | null;
+  announcementSeq: number;
   connection: Connection;
 }
 
@@ -23,6 +29,7 @@ export function initialFeedState(rows: readonly WorkOrderRow[]): FeedState {
     orders: sortWorkOrders(rows),
     recentIds: [],
     announcement: null,
+    announcementSeq: 0,
     connection: "connecting",
   };
 }
@@ -40,12 +47,14 @@ export function feedReducer(state: FeedState, action: FeedAction): FeedState {
           ? state.orders.map((row) => (row.id === action.row.id ? action.row : row))
           : [...state.orders, action.row],
       );
-      const isNew = !exists && action.fromRealtime;
+      if (exists || !action.fromRealtime) return { ...state, orders };
+      const seq = state.announcementSeq + 1;
       return {
         ...state,
         orders,
-        recentIds: isNew ? [...state.recentIds, action.row.id] : state.recentIds,
-        announcement: isNew ? announceFor(action.row) : null,
+        recentIds: [...state.recentIds, action.row.id],
+        announcement: { seq, text: announceFor(action.row) },
+        announcementSeq: seq,
       };
     }
     case "setStatus":

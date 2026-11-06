@@ -20,4 +20,14 @@ describe("sortWorkOrders", () => {
     expect(sortWorkOrders(input).map((r) => r.id)).toEqual(["newer", "older"]);
     expect(input.map((r) => r.id)).toEqual(["older", "newer"]);
   });
+
+  it("compares timestamps as instants, not strings", () => {
+    const offset = makeWorkOrderRow({ id: "offset", created_at: "2026-11-06T10:00:00+00:00" });
+    const fractional = makeWorkOrderRow({
+      id: "fractional",
+      created_at: "2026-11-06T10:00:00.500Z",
+    });
+    expect(sortWorkOrders([offset, fractional]).map((r) => r.id)).toEqual(["fractional", "offset"]);
+    expect(sortWorkOrders([fractional, offset]).map((r) => r.id)).toEqual(["fractional", "offset"]);
+  });
 });
