@@ -91,7 +91,9 @@ supabase/migrations/*.sql    schema
 
 On an API error, refusal, or Zod failure, retry the extraction once. If the second attempt also
 fails, save the report with `extraction_status = 'fallback'` and one ticket: type `Other`,
-priority `High`, summary "Needs manual review — automatic extraction failed", needs follow-up.
+summary "Needs manual review: automatic extraction failed", needs follow-up. The safety rules in
+3.4 still run on the raw report for that ticket: its floor is `High` with
+`priority_source = 'fallback'`, raised to a matched rule's floor with that rule as the source.
 Nothing is dropped.
 
 ### 3.2 Model output schema
@@ -117,7 +119,8 @@ Nothing is dropped.
 ### 3.3 Grounding checks (enforced in code, not only in the prompt)
 
 - **Unit.** Normalize the unit (uppercase; strip "unit", "apt", "apartment", "#", spaces) and
-  require it to appear in the normalized report as a whole token. If it doesn't, set it to null.
+  require it to contain a digit and to appear in the normalized report as a whole token, so a
+  stray "A" or "I" in the text cannot pass as an apartment. If it doesn't, set it to null.
   Whenever the unit is null, ensure `unit_number` is in `missing_fields`.
 - **Source quote.** Must be a case- and whitespace-insensitive substring of the report. If it
   isn't, discard it, and the safety rules read the full report for that issue (err toward
@@ -130,16 +133,18 @@ the drawer and the walkthrough can show what the code overrode.
 
 ### 3.4 Safety rules
 
-Pure functions over `source_quote + " " + summary` for each issue. They only raise priority.
-Final priority is the maximum of the model's priority and every matched rule's floor.
+Pure functions over `source_quote + " " + summary` for each issue; when a report yields a single
+issue the whole report stands in for the quote, so a quote that stops short of the hazard word
+cannot hide it. They only raise priority. Final priority is the maximum of the model's priority
+and every matched rule's floor.
 
 | Rule | Matches (case-insensitive, word-bounded) | Floor |
 |---|---|---|
 | `gas_odor` | (smell, odor, odour) and "gas" in the same sentence; gas leak; rotten egg; carbon monoxide; CO alarm/detector | Emergency |
-| `water_electrical` | (leak, water, drip, flood) together with (outlet, socket, electrical, wiring, breaker, panel, spark) | Emergency |
-| `fire_smoke` | fire, smoke, burning smell, sparking | Emergency |
+| `water_electrical` | in one sentence: water in motion or in place (leak, drip, flood, pouring, soaked, "water coming through / in / near") together with an electrical fixture (outlet, socket, wiring, breaker, electrical, light, lamp, switch, spark). The bare word "water" ("water heater", "water stain"), "electric" naming an appliance and "light" as a size do not count | Emergency |
+| `fire_smoke` | fire, flames, smoke, burning smell, sparking, or a smoke/fire alarm going off. Naming the alarm is not evidence: "smoke detector battery is low" or chirping does not match | Emergency |
 | `flooding` | flooding, flooded, burst pipe, water pouring or gushing | Emergency |
-| `no_heat_cold` | (no heat; heat/heater/heating/furnace + not / isn't / is not / stopped working or broken) together with (freezing, cold) | High |
+| `no_heat_cold` | (no heat; heat/heater/heating/furnace/boiler/radiator + not / isn't / stopped / broken / out / off) together with (freezing, cold) | High |
 
 Rule tests use the five sample reports verbatim plus near-miss negatives (e.g. "gas stove works
 fine, but the oven light is out" must not match `gas_odor`).
@@ -150,7 +155,7 @@ regardless of how the caller described it"), even if the model had already chose
 level. The rule is the policy of record. The model's own priority and rationale are kept in
 `model_priority` and `model_rationale`, so the drawer can show "model said High, gas rule raised
 it to Emergency" when that happens. With no match, `priority_source = 'model'` and the reason is
-the model's rationale.
+the model's rationale (`'fallback'` on the manual-review ticket, which has no model view).
 
 ### 3.5 Prompt
 
@@ -192,7 +197,7 @@ work_orders
   report_id uuid not null references reports on delete cascade
   position smallint not null                   -- order within the report
   issue_type, priority, model_priority          -- checked against the enums
-  priority_source text not null check (priority_source = 'model' or priority_source like 'rule:%')
+  priority_source text not null check (priority_source in ('model', 'fallback') or priority_source like 'rule:%')
   priority_reason text not null, model_rationale text
   unit text, area text
   summary text not null check (char_length(summary) <= 200)
