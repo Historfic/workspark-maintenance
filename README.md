@@ -3,8 +3,8 @@
 [![CI](https://github.com/Historfic/workspark-maintenance/actions/workflows/ci.yml/badge.svg)](https://github.com/Historfic/workspark-maintenance/actions/workflows/ci.yml)
 
 Tenants describe a maintenance problem by message or call; Claude turns each report into one or more
-structured tickets, code checks the result, and a live admin dashboard shows them by urgency. Built
-on the Workspark triage prototype to show the Solvv-Tunic tenant line's admin experience.
+structured tickets, code checks the result, and a live admin dashboard shows them by urgency. It
+shows the Solvv-Tunic tenant line's admin experience ahead of the production build.
 
 **Live:** https://workspark-maintenance.vercel.app (no login: see [Decisions](#decisions-and-trade-offs)).
 

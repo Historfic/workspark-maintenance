@@ -1,4 +1,7 @@
-# Workspark — AI-Powered Maintenance Ticketing Dashboard
+# Solvv-Tunic — AI tenant line demo
+
+This repo began as the Workspark take-home (below) and became the Solvv-Tunic tenant line UI demo
+on 2026-11-14. The repo and Vercel names keep `workspark-maintenance` so existing links work.
 
 Take-home test project for a hiring process. The brief is the Word file
 `Mini Test Project - AI-Powered Maintenance Ticketing Dashboard.docx`, kept **local only** (gitignored,
