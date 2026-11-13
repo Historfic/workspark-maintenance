@@ -3,23 +3,28 @@
 import { clsx } from "clsx";
 import { Badge } from "@/components/ui/badge";
 import type { WorkOrderRow } from "@/lib/db/types";
+import { rmTicketNumber } from "@/lib/demo/rent-manager";
+import type { DemoSettings } from "@/lib/demo/settings";
 import { relativeTime } from "@/lib/dashboard/time";
 import type { Status } from "@/lib/triage/schema";
 import { PriorityBadge } from "./priority-badge";
 import { StatusControl } from "./status-control";
+import { EscalationBadge } from "./escalation-badge";
+import { TenantCell } from "./tenant-cell";
 import { TypeIcon } from "./type-icon";
-import { UnitChip } from "./unit-chip";
 
 export function WorkOrderCard({
   order,
   recent,
   now,
+  settings,
   onStatusChange,
   onOpen,
 }: {
   order: WorkOrderRow;
   recent: boolean;
   now: Date;
+  settings: DemoSettings;
   onStatusChange: (id: string, status: Status) => Promise<void>;
   onOpen: (id: string) => void;
 }) {
@@ -41,7 +46,7 @@ export function WorkOrderCard({
         <TypeIcon type={order.issue_type} />
         <span>{order.issue_type}</span>
         <span aria-hidden>·</span>
-        <UnitChip unit={order.unit} />
+        <TenantCell unit={order.unit} />
         {order.needs_followup && order.unit !== null && (
           <Badge tone="followup">Needs follow-up</Badge>
         )}
@@ -53,6 +58,10 @@ export function WorkOrderCard({
       >
         {order.summary}
       </button>
+      <div className="mt-1 flex flex-wrap items-center gap-2">
+        <span className="font-mono text-xs text-ink-muted">{rmTicketNumber(order.id)}</span>
+        <EscalationBadge order={order} settings={settings} now={now} />
+      </div>
       <div className="mt-3">
         <StatusControl order={order} size="lg" onChange={onStatusChange} />
       </div>

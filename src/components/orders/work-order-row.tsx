@@ -3,12 +3,15 @@
 import { clsx } from "clsx";
 import { Badge } from "@/components/ui/badge";
 import type { WorkOrderRow } from "@/lib/db/types";
+import { rmTicketNumber } from "@/lib/demo/rent-manager";
+import type { DemoSettings } from "@/lib/demo/settings";
 import { relativeTime } from "@/lib/dashboard/time";
 import type { Status } from "@/lib/triage/schema";
 import { PriorityBadge } from "./priority-badge";
 import { StatusControl } from "./status-control";
+import { EscalationBadge } from "./escalation-badge";
+import { TenantCell } from "./tenant-cell";
 import { TypeIcon } from "./type-icon";
-import { UnitChip } from "./unit-chip";
 
 const CELL = "px-3 py-3.5";
 
@@ -17,6 +20,7 @@ export function WorkOrderTableRow({
   recent,
   siblingCount,
   now,
+  settings,
   onStatusChange,
   onOpen,
 }: {
@@ -24,6 +28,7 @@ export function WorkOrderTableRow({
   recent: boolean;
   siblingCount: number;
   now: Date;
+  settings: DemoSettings;
   onStatusChange: (id: string, status: Status) => Promise<void>;
   onOpen: (id: string) => void;
 }) {
@@ -45,7 +50,7 @@ export function WorkOrderTableRow({
         </span>
       </td>
       <td className={CELL}>
-        <UnitChip unit={order.unit} />
+        <TenantCell unit={order.unit} />
       </td>
       <td className={CELL}>
         <button
@@ -55,16 +60,20 @@ export function WorkOrderTableRow({
         >
           <span className="line-clamp-2">{order.summary}</span>
         </button>
-        {siblingCount > 1 && (
-          <span className="mt-1 block text-xs text-ink-muted">
-            {order.position + 1} of {siblingCount} from this report
-          </span>
-        )}
-        {order.needs_followup && order.unit !== null && (
-          <Badge tone="followup" className="mt-1.5">
-            Needs follow-up
-          </Badge>
-        )}
+        <span className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-ink-muted">
+          <span className="font-mono">{rmTicketNumber(order.id)}</span>
+          {siblingCount > 1 && (
+            <span>
+              · {order.position + 1} of {siblingCount} from this report
+            </span>
+          )}
+        </span>
+        <div className="mt-1.5 flex flex-wrap gap-1.5 empty:hidden">
+          <EscalationBadge order={order} settings={settings} now={now} />
+          {order.needs_followup && order.unit !== null && (
+            <Badge tone="followup">Needs follow-up</Badge>
+          )}
+        </div>
       </td>
       <td className={CELL}>
         <StatusControl order={order} onChange={onStatusChange} />
