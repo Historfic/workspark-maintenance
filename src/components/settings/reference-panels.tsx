@@ -47,7 +47,7 @@ export function PropertiesPanel() {
         </span>
       </div>
       <p className="mt-0.5 text-sm text-ink-muted">
-        Read from Rent Manager, never edited here. The agent recognises tenants by their phone
+        Read from Rent Manager, never edited here. The agent recognizes tenants by their phone
         number or email.
       </p>
       <ul className="mt-4 divide-y divide-line">

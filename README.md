@@ -1,18 +1,27 @@
-# Workspark maintenance triage
+# Solvv-Tunic AI tenant line — demo
 
 [![CI](https://github.com/Historfic/workspark-maintenance/actions/workflows/ci.yml/badge.svg)](https://github.com/Historfic/workspark-maintenance/actions/workflows/ci.yml)
 
-Tenants describe a maintenance problem in their own words; Claude turns each report into one or more
-structured work orders, code checks the result, and a live dashboard shows them by urgency.
+Tenants describe a maintenance problem by message or call; Claude turns each report into one or more
+structured tickets, code checks the result, and a live admin dashboard shows them by urgency. Built
+on the Workspark triage prototype to show the Solvv-Tunic tenant line's admin experience.
 
 **Live:** https://workspark-maintenance.vercel.app (no login: see [Decisions](#decisions-and-trade-offs)).
+
+**Real vs simulated.** Real: Claude triage, the safety rules, the database, live updates, and the
+Retell browser call, whose transcript becomes tickets. Simulated, and labelled so on screen: Rent
+Manager (tenants, properties, `SI-####` numbers in [`src/lib/demo`](src/lib/demo)), the emergency
+call-out to the on-call super, booking, and the agent's reply to a message. Settings are kept in the
+browser only.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
   T[Typed report] --> API["POST /api/reports"]
+  C[Retell call] --> W["POST /api/webhooks/retell<br/>signature checked"]
   API --> N[Normalize]
+  W --> N
   N --> X["Claude Fable 5.1<br/>structured output"]
   X --> G["Ground<br/>unit + quotes"]
   G --> R["Safety rules<br/>raise only"]
@@ -33,8 +42,8 @@ Requires Node 24 and pnpm 12.
 
 1. `pnpm install`
 2. `cp .env.example .env.local` and fill in the Anthropic key, the Supabase URL and keys,
-   `DATABASE_URL` (session pooler string) and a random `RATE_LIMIT_SALT`. Each variable is
-   commented in `.env.example`.
+   `DATABASE_URL` (session pooler string), a random `RATE_LIMIT_SALT`, and optionally the Retell
+   keys and agent id for the call button. Each variable is commented in `.env.example`.
 3. `pnpm db:migrate` applies `supabase/migrations/*.sql`.
 4. `pnpm dev` and open http://localhost:3000.
 5. Optional: `pnpm seed:demo` runs 14 realistic reports through the real pipeline;
@@ -86,34 +95,29 @@ Full table and method: [docs/walkthrough.md](docs/walkthrough.md).
   salt), request size caps and an Anthropic spend limit.
 - **Fable at low effort** for extraction, overridable with `ANTHROPIC_MODEL`. Latency on the five
   reports was 2.6–4.3 s, fine for a synchronous request.
-- **Functions in Seoul (`icn1`)** next to the database region, because every request makes several
-  database round trips.
+- **Retell for voice**, matching the tenant line's plan. The browser uses a public key restricted to
+  this site's domains; calls are capped at five minutes.
 
 ## Known limitations
 
-- Rules match words, not meaning: "no gas smell" still raises a gas emergency, and water mentioned
-  in the same sentence as a light fixture can over-escalate. "The radiators are cold" may not
-  trigger the no-heat rule.
+- Rules match words, not meaning: "no gas smell" still raises a gas emergency, and "the radiators
+  are cold" may not trigger the no-heat rule.
 - A unit must contain a digit to survive grounding, so a transcript reading "seven A" would be
   dropped and flagged for follow-up.
 - Report text is readable by anyone who has the dashboard URL.
-- The rate limit trusts `x-forwarded-for`, which Vercel sets; elsewhere it could be spoofed.
-- A client that retries after a lost response creates a duplicate report (no idempotency key).
 - Borderline priorities (report 5 Low, report 3's light Medium) rest on model judgment and can
   move by one level between runs.
-- Voice intake through Vapi (phone number and in-browser call) is being added now.
+- Retell call ids are stored in the `vapi_call_id` column, kept from the earlier Vapi build to avoid
+  a migration in the demo.
 
 ## What I'd do next
 
-Sign-in with tenant and manager roles, and RLS scoped per property. Technician assignment and an
-SMS alert on every Emergency. A larger eval set with negations and adversarial phrasing, run
-nightly with a budget. An idempotency key on report submission.
+The production tenant line replaces each simulation with the real service: Rent Manager's API for
+tenants and tickets, Twilio for SMS and the on-call call-out, admin sign-in, and settings saved in
+the database. A larger eval set built from real tenant calls, run nightly with a budget.
 
 ## How AI was used
 
-Built with Claude Code. Claude Opus coordinated; implementation tasks went to Claude Fable
-subagents, and each task was reviewed by a separate model before it landed. The process followed a
-written spec, per-phase plans and test-first development; all of it is in
+Built with Claude Code from written specs, plans and test-first development, all in
 [docs/superpowers](docs/superpowers) and [docs/handoff](docs/handoff). Commits carry a
-`Co-Authored-By: Claude` trailer. I reviewed the plans, made the product decisions and checked the
-running app.
+`Co-Authored-By: Claude` trailer. I made the product decisions and checked the running app.

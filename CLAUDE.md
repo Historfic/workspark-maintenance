@@ -32,6 +32,10 @@ Rafael's machine setup checklist: `docs/handoff/SETUP-NEW-DESKTOP.md`.
 - [ ] Phase 4 — voice input
 - [ ] Phase 5 — README, walkthrough, Loom script, screenshots, final review
 - [ ] Submitted
+- [ ] 2026-11-14: reshape into the Solvv-Tunic tenant line UI demo for Avraham (Rafael's call):
+      spec `docs/superpowers/specs/2026-11-14-tenant-line-demo-design.md`, branch
+      `feat/tenant-line-demo`. Retell replaces Vapi; Rent Manager, call-outs and booking are
+      simulated in `src/lib/demo`.
 
 ## Decisions — answered by Rafael on 2026-11-05
 
@@ -180,11 +184,9 @@ NEXT_PUBLIC_SUPABASE_URL=              # required
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=  # required — sb_publishable_…, read-only via RLS, used for Realtime
 SUPABASE_SECRET_KEY=                   # required — sb_secret_…, server only, never shipped to the browser
 DATABASE_URL=                          # migrations only (session pooler connection string)
-VAPI_PRIVATE_KEY=               # setup scripts only — creates/updates the assistant
-NEXT_PUBLIC_VAPI_PUBLIC_KEY=    # browser web call (public by design; restrict origins in Vapi)
-NEXT_PUBLIC_VAPI_ASSISTANT_ID=  # browser web call
-NEXT_PUBLIC_VAPI_PHONE_NUMBER=  # shown on the dashboard
-VAPI_WEBHOOK_SECRET=            # verifies end-of-call webhooks
+RETELL_API_KEY=                 # webhook-badge key; verifies x-retell-signature (server only)
+NEXT_PUBLIC_RETELL_PUBLIC_KEY=  # browser web call (restrict to the site's domains in Retell)
+NEXT_PUBLIC_RETELL_AGENT_ID=    # the tenant-line demo agent
 RATE_LIMIT_SALT=                # hashes client IPs for the intake rate limit
 ```
 
