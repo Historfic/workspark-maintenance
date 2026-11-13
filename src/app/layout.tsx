@@ -18,8 +18,9 @@ const firaCode = Fira_Code({
 });
 
 export const metadata: Metadata = {
-  title: "Workspark Maintenance",
-  description: "Tenant maintenance reports in, triaged work orders out.",
+  title: "Solvv-Tunic · AI tenant line",
+  description:
+    "Demo of the Solvv-Tunic AI tenant line: tenant calls and messages in, triaged Rent Manager tickets out.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

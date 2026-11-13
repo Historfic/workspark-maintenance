@@ -8,7 +8,6 @@ import { MAX_CALL_SECONDS } from "@/lib/voice/constants";
 
 const PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY ?? "";
 const ASSISTANT_ID = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID ?? "";
-const PHONE_NUMBER = process.env.NEXT_PUBLIC_VAPI_PHONE_NUMBER ?? "";
 const LIMIT = formatElapsed(MAX_CALL_SECONDS * 1000);
 
 function statusText(state: CallState): string {
@@ -99,17 +98,6 @@ export function CallIntake() {
     <div className="mt-4 border-t border-line pt-4">
       <p className="mb-2 text-xs text-ink-muted">Or call it in</p>
       <CallControls publicKey={PUBLIC_KEY} assistantId={ASSISTANT_ID} />
-      {PHONE_NUMBER && (
-        <p className="mt-3 text-xs text-ink-muted">
-          Or dial{" "}
-          <a
-            href={`tel:${PHONE_NUMBER.replace(/[^+\d]/g, "")}`}
-            className="font-mono text-ink underline underline-offset-2 hover:text-accent"
-          >
-            {PHONE_NUMBER}
-          </a>
-        </p>
-      )}
     </div>
   );
 }

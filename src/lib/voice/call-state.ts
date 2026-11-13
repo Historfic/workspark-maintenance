@@ -16,7 +16,7 @@ export type CallEvent =
 
 const MIC_BLOCKED =
   "Microphone access is blocked. Allow it for this site in the browser, then try again.";
-const CALL_FAILED = "The call could not connect. Try again, or dial the number below.";
+const CALL_FAILED = "The call could not connect. Try again in a moment.";
 const MAX_ERROR_DEPTH = 3;
 
 export function callReducer(state: CallState, event: CallEvent): CallState {
