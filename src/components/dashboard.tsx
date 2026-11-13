@@ -121,7 +121,7 @@ export function Dashboard({
       <p className="sr-only" aria-live="polite">
         {liveText}
       </p>
-      <OrderDrawer order={openOrder} onClose={() => setOpenId(null)} />
+      <OrderDrawer order={openOrder} settings={settings} onClose={() => setOpenId(null)} />
     </div>
   );
 }
