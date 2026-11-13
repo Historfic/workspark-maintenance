@@ -1,7 +1,7 @@
 export type CallState =
   | { kind: "idle" }
   | { kind: "connecting" }
-  | { kind: "live"; startedAt: number; agentSpeaking: boolean }
+  | { kind: "live"; startedAt: number }
   | { kind: "ending" }
   | { kind: "ended" }
   | { kind: "error"; message: string };
@@ -9,7 +9,6 @@ export type CallState =
 export type CallEvent =
   | { type: "start" }
   | { type: "connected"; at: number }
-  | { type: "agent-speech"; speaking: boolean }
   | { type: "hang-up" }
   | { type: "ended" }
   | { type: "failed"; message: string };
@@ -24,11 +23,7 @@ export function callReducer(state: CallState, event: CallEvent): CallState {
     case "start":
       return state.kind === "connecting" || state.kind === "live" ? state : { kind: "connecting" };
     case "connected":
-      return state.kind === "connecting"
-        ? { kind: "live", startedAt: event.at, agentSpeaking: false }
-        : state;
-    case "agent-speech":
-      return state.kind === "live" ? { ...state, agentSpeaking: event.speaking } : state;
+      return state.kind === "connecting" ? { kind: "live", startedAt: event.at } : state;
     case "hang-up":
       return state.kind === "live" || state.kind === "connecting" ? { kind: "ending" } : state;
     case "ended":
