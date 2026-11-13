@@ -1,13 +1,13 @@
 import { after } from "next/server";
-import { getVapiDeps } from "@/lib/api/deps";
+import { getRetellDeps } from "@/lib/api/deps";
 import { withErrorBoundary } from "@/lib/api/http";
-import { handleVapiWebhook } from "@/lib/api/vapi-webhook";
+import { handleRetellWebhook } from "@/lib/api/retell-webhook";
 
 export const maxDuration = 60;
 
 export const POST = withErrorBoundary((req: Request) =>
-  handleVapiWebhook(
+  handleRetellWebhook(
     req,
-    getVapiDeps((task) => after(task)),
+    getRetellDeps((task) => after(task)),
   ),
 );
