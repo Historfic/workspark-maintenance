@@ -32,6 +32,20 @@ const DEMO_TENANTS: readonly DemoTenant[] = [
   { name: "Omar Haddad", unit: "10B", propertyId: "P-102", phone: "(555) 011-1350" },
   { name: "Chloe Martin", unit: "11A", propertyId: "P-102", phone: "(555) 011-2466" },
   { name: "Lucas Silva", unit: "9C", propertyId: "P-101", phone: "(555) 011-3592" },
+  { name: "Priya Patel", unit: "10A", propertyId: "P-102", phone: "(555) 011-4618" },
+  { name: "Marcus Bell", unit: "11D", propertyId: "P-102", phone: "(555) 011-5724" },
+  { name: "Hannah Cohen", unit: "12B", propertyId: "P-102", phone: "(555) 011-6830" },
+  { name: "Diego Alvarez", unit: "2C", propertyId: "P-101", phone: "(555) 011-7946" },
+  { name: "Emily Zhang", unit: "3B", propertyId: "P-101", phone: "(555) 011-8052" },
+  { name: "Samuel Osei", unit: "3F", propertyId: "P-101", phone: "(555) 011-9168" },
+  { name: "Rachel Green", unit: "3Z", propertyId: "P-101", phone: "(555) 012-0274" },
+  { name: "Victor Petrov", unit: "4F", propertyId: "P-101", phone: "(555) 012-1380" },
+  { name: "Nadia Hassan", unit: "4J", propertyId: "P-101", phone: "(555) 012-2496" },
+  { name: "Ben Turner", unit: "5B", propertyId: "P-101", phone: "(555) 012-3502" },
+  { name: "Isabel Reyes", unit: "5D", propertyId: "P-101", phone: "(555) 012-4618" },
+  { name: "Kenji Watanabe", unit: "6A", propertyId: "P-102", phone: "(555) 012-5724" },
+  { name: "Olivia Dubois", unit: "8E", propertyId: "P-102", phone: "(555) 012-6830" },
+  { name: "Tariq Ahmed", unit: "9A", propertyId: "P-101", phone: "(555) 012-7946" },
 ];
 
 export function findTenant(unit: string | null): DemoTenant | null {
