@@ -11,6 +11,7 @@ import { OrderDrawer } from "@/components/orders/order-drawer";
 import { WorkOrderList } from "@/components/orders/work-order-list";
 import { LiveIndicator } from "@/components/live-indicator";
 import { PageHeader } from "@/components/page-header";
+import { useDemoSettings } from "@/hooks/use-demo-settings";
 import { useWorkOrdersFeed } from "@/hooks/use-work-orders-feed";
 import type { WorkOrderRow } from "@/lib/db/types";
 import { countFilters, type FilterKey } from "@/lib/dashboard/filters";
@@ -34,6 +35,7 @@ export function Dashboard({
   initialNow: string;
 }) {
   const { state, dispatch } = useWorkOrdersFeed(initialOrders);
+  const { settings } = useDemoSettings();
   const [filter, setFilter] = useState<FilterKey>("all");
   const [openId, setOpenId] = useState<string | null>(null);
   // The server's clock seeds `now` so the first client render matches the HTML it hydrates.
@@ -100,7 +102,7 @@ export function Dashboard({
             className="min-w-0 rounded border border-line bg-surface shadow-card"
           >
             <h2 id="orders-heading" className="sr-only">
-              Work orders
+              Tickets
             </h2>
             <FilterTabs value={filter} counts={counts} onChange={setFilter}>
               <WorkOrderList
@@ -108,6 +110,7 @@ export function Dashboard({
                 recentIds={state.recentIds}
                 filter={filter}
                 now={now}
+                settings={settings}
                 onStatusChange={onStatusChange}
                 onOpen={setOpenId}
               />
@@ -118,7 +121,7 @@ export function Dashboard({
       <p className="sr-only" aria-live="polite">
         {liveText}
       </p>
-      <OrderDrawer order={openOrder} onClose={() => setOpenId(null)} />
+      <OrderDrawer order={openOrder} settings={settings} onClose={() => setOpenId(null)} />
     </div>
   );
 }

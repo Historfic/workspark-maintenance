@@ -7,12 +7,20 @@ import { Button } from "@/components/ui/button";
 import { getBrowserClient } from "@/lib/db/browser-client";
 import { fetchReportBundle } from "@/lib/db/public-reads";
 import type { ReportRow, WorkOrderRow } from "@/lib/db/types";
+import { SOURCE_LABEL } from "@/lib/dashboard/labels";
+import type { DemoSettings } from "@/lib/demo/settings";
+import {
+  Booking,
+  Conversation,
+  EscalationTimeline,
+  SimulatedTag,
+  TenantLine,
+} from "./demo-sections";
 import {
   AuditTrail,
   MissingInfo,
   PriorityExplanation,
   RawOutput,
-  ReportText,
   Section,
   Siblings,
 } from "./drawer-sections";
@@ -26,9 +34,11 @@ type Bundle = Loaded | { kind: "loading" };
 
 export function OrderDrawer({
   order,
+  settings,
   onClose,
 }: {
   order: WorkOrderRow | null;
+  settings: DemoSettings;
   onClose: () => void;
 }) {
   const [loaded, setLoaded] = useState<{ key: string; result: Loaded } | null>(null);
@@ -91,6 +101,7 @@ export function OrderDrawer({
                   <Dialog.Title className="mt-2 text-lg leading-snug font-semibold">
                     {shown.summary}
                   </Dialog.Title>
+                  <TenantLine order={shown} />
                 </div>
                 <Dialog.Close asChild>
                   <Button variant="ghost" size="sm" aria-label="Close">
@@ -129,8 +140,34 @@ export function OrderDrawer({
                 )}
                 {bundle.kind === "ready" && (
                   <>
-                    <Section title="What the caller said">
-                      <ReportText text={bundle.report.raw_text} quote={shown.source_quote} />
+                    <Section title={`Conversation · ${SOURCE_LABEL[bundle.report.source]}`}>
+                      <Conversation
+                        report={bundle.report}
+                        siblings={bundle.siblings}
+                        order={shown}
+                      />
+                    </Section>
+                    {shown.priority === "Emergency" && (
+                      <Section
+                        title={
+                          <>
+                            Emergency call-out
+                            <SimulatedTag />
+                          </>
+                        }
+                      >
+                        <EscalationTimeline order={shown} settings={settings} />
+                      </Section>
+                    )}
+                    <Section
+                      title={
+                        <>
+                          Booking
+                          <SimulatedTag />
+                        </>
+                      }
+                    >
+                      <Booking order={shown} settings={settings} />
                     </Section>
                     <Section title="Priority">
                       <PriorityExplanation order={shown} report={bundle.report} />

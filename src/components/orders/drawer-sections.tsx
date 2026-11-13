@@ -20,7 +20,7 @@ const MISSING_LABEL: Record<string, string> = {
   quote_not_in_report: "The model's quote was not verbatim; the whole report was used instead.",
 };
 
-export function Section({ title, children }: { title: string; children: ReactNode }) {
+export function Section({ title, children }: { title: ReactNode; children: ReactNode }) {
   return (
     <section className="border-t border-line pt-4">
       <h3 className="text-xs font-semibold tracking-wide text-ink-muted uppercase">{title}</h3>

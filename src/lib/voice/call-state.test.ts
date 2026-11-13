@@ -8,10 +8,8 @@ describe("callReducer", () => {
     const connecting = callReducer(idle, { type: "start" });
     expect(connecting).toEqual({ kind: "connecting" });
     const live = callReducer(connecting, { type: "connected", at: 1000 });
-    expect(live).toEqual({ kind: "live", startedAt: 1000, agentSpeaking: false });
-    const speaking = callReducer(live, { type: "agent-speech", speaking: true });
-    expect(speaking).toEqual({ kind: "live", startedAt: 1000, agentSpeaking: true });
-    const ending = callReducer(speaking, { type: "hang-up" });
+    expect(live).toEqual({ kind: "live", startedAt: 1000 });
+    const ending = callReducer(live, { type: "hang-up" });
     expect(ending).toEqual({ kind: "ending" });
     expect(callReducer(ending, { type: "ended" })).toEqual({ kind: "ended" });
   });
@@ -26,7 +24,7 @@ describe("callReducer", () => {
   });
 
   it("ends a live call when the other side hangs up", () => {
-    const live: CallState = { kind: "live", startedAt: 1000, agentSpeaking: false };
+    const live: CallState = { kind: "live", startedAt: 1000 };
     expect(callReducer(live, { type: "ended" })).toEqual({ kind: "ended" });
   });
 
@@ -83,7 +81,7 @@ describe("describeCallError", () => {
   });
 
   it("falls back to a generic message", () => {
-    expect(describeCallError({ type: "daily-error" })).toMatch(/could not connect/i);
+    expect(describeCallError({ type: "transport-error" })).toMatch(/could not connect/i);
     expect(describeCallError(undefined)).toMatch(/could not connect/i);
   });
 });

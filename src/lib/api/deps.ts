@@ -7,7 +7,7 @@ import { createExtractor, DEFAULT_MODEL } from "@/lib/triage/extract";
 import type { Extractor } from "@/lib/triage/types";
 import { hashIp } from "./client-ip";
 import type { CreateReportDeps } from "./create-report";
-import type { VapiWebhookDeps } from "./vapi-webhook";
+import type { RetellWebhookDeps } from "./retell-webhook";
 
 const MAX_REPORTS_PER_MINUTE = 10;
 
@@ -45,9 +45,9 @@ export function getDeps(): CreateReportDeps {
   return cachedDeps;
 }
 
-export function getVapiDeps(defer: VapiWebhookDeps["defer"]): VapiWebhookDeps {
+export function getRetellDeps(defer: RetellWebhookDeps["defer"]): RetellWebhookDeps {
   return {
-    secret: requireEnv("VAPI_WEBHOOK_SECRET"),
+    apiKey: requireEnv("RETELL_API_KEY"),
     store: getStore(),
     extract: getExtractor(),
     defer,

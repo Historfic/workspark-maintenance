@@ -16,7 +16,7 @@ export const STATUS_LABEL: Record<Status, string> = {
 };
 
 export const SOURCE_LABEL: Record<Source, string> = {
-  text: "Typed report",
+  text: "Message (SMS or email)",
   phone: "Phone call",
   web_call: "Browser call",
 };

@@ -2,19 +2,18 @@
 
 import { PhoneDisconnectIcon, PhoneIcon, WarningCircleIcon } from "@phosphor-icons/react/dist/ssr";
 import { Button } from "@/components/ui/button";
-import { useVapiCall } from "@/hooks/use-vapi-call";
+import { useRetellCall } from "@/hooks/use-retell-call";
 import { formatElapsed, type CallState } from "@/lib/voice/call-state";
 import { MAX_CALL_SECONDS } from "@/lib/voice/constants";
 
-const PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY ?? "";
-const ASSISTANT_ID = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID ?? "";
-const PHONE_NUMBER = process.env.NEXT_PUBLIC_VAPI_PHONE_NUMBER ?? "";
+const PUBLIC_KEY = process.env.NEXT_PUBLIC_RETELL_PUBLIC_KEY ?? "";
+const AGENT_ID = process.env.NEXT_PUBLIC_RETELL_AGENT_ID ?? "";
 const LIMIT = formatElapsed(MAX_CALL_SECONDS * 1000);
 
 function statusText(state: CallState): string {
   switch (state.kind) {
     case "idle":
-      return `Talk to the intake assistant in your browser. Calls end after ${MAX_CALL_SECONDS / 60} minutes.`;
+      return `Talk to the tenant-line agent in your browser. Calls end after ${MAX_CALL_SECONDS / 60} minutes.`;
     case "connecting":
       return "Connecting…";
     case "live":
@@ -41,8 +40,8 @@ function buttonLabel(state: CallState): string {
   }
 }
 
-function CallControls({ publicKey, assistantId }: { publicKey: string; assistantId: string }) {
-  const { state, elapsedMs, start, hangUp } = useVapiCall(publicKey, assistantId);
+function CallControls({ publicKey, agentId }: { publicKey: string; agentId: string }) {
+  const { state, elapsedMs, start, hangUp } = useRetellCall(publicKey, agentId);
   const live = state.kind === "live";
   const connecting = state.kind === "connecting";
   const busy = connecting || state.kind === "ending";
@@ -81,7 +80,7 @@ function CallControls({ publicKey, assistantId }: { publicKey: string; assistant
           <>
             <span aria-hidden className="flex items-center gap-2 text-ink">
               <span className="size-2.5 shrink-0 rounded-full bg-accent motion-safe:animate-pulse" />
-              {state.agentSpeaking ? "Agent speaking" : "Listening"}
+              Live · speak now
             </span>
             <span className="ml-auto shrink-0 font-mono text-ink tabular-nums">
               {formatElapsed(elapsedMs)} / {LIMIT}
@@ -94,22 +93,11 @@ function CallControls({ publicKey, assistantId }: { publicKey: string; assistant
 }
 
 export function CallIntake() {
-  if (!PUBLIC_KEY || !ASSISTANT_ID) return null;
+  if (!PUBLIC_KEY || !AGENT_ID) return null;
   return (
     <div className="mt-4 border-t border-line pt-4">
       <p className="mb-2 text-xs text-ink-muted">Or call it in</p>
-      <CallControls publicKey={PUBLIC_KEY} assistantId={ASSISTANT_ID} />
-      {PHONE_NUMBER && (
-        <p className="mt-3 text-xs text-ink-muted">
-          Or dial{" "}
-          <a
-            href={`tel:${PHONE_NUMBER.replace(/[^+\d]/g, "")}`}
-            className="font-mono text-ink underline underline-offset-2 hover:text-accent"
-          >
-            {PHONE_NUMBER}
-          </a>
-        </p>
-      )}
+      <CallControls publicKey={PUBLIC_KEY} agentId={AGENT_ID} />
     </div>
   );
 }

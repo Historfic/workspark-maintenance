@@ -2,6 +2,7 @@
 
 import { ClipboardTextIcon } from "@phosphor-icons/react/dist/ssr";
 import type { WorkOrderRow } from "@/lib/db/types";
+import type { DemoSettings } from "@/lib/demo/settings";
 import { matchesFilter, type FilterKey } from "@/lib/dashboard/filters";
 import type { Status } from "@/lib/triage/schema";
 import { WorkOrderCard } from "./work-order-card";
@@ -11,7 +12,7 @@ import { WorkOrderTableRow } from "./work-order-row";
 const COLUMNS = [
   { label: "Priority", width: "w-[8.5rem]" },
   { label: "Type", width: "w-[8.5rem]" },
-  { label: "Unit", width: "w-[8.5rem]" },
+  { label: "Tenant", width: "w-[11rem]" },
   { label: "Summary", width: "w-auto" },
   { label: "Status", width: "w-[13.5rem]" },
   { label: "Age", width: "w-[6.5rem]" },
@@ -22,6 +23,7 @@ export function WorkOrderList({
   recentIds,
   filter,
   now,
+  settings,
   onStatusChange,
   onOpen,
 }: {
@@ -29,6 +31,7 @@ export function WorkOrderList({
   recentIds: string[];
   filter: FilterKey;
   now: Date;
+  settings: DemoSettings;
   onStatusChange: (id: string, status: Status) => Promise<void>;
   onOpen: (id: string) => void;
 }) {
@@ -43,7 +46,7 @@ export function WorkOrderList({
         <ClipboardTextIcon size={40} aria-hidden className="text-ink-muted" />
         <p>
           {orders.length === 0
-            ? "No work orders yet. Try a sample report."
+            ? "No tickets yet. Try a sample report or call it in."
             : "Nothing matches this filter."}
         </p>
       </div>
@@ -79,6 +82,7 @@ export function WorkOrderList({
               recent={recentIds.includes(order.id)}
               siblingCount={siblingCounts.get(order.report_id) ?? 1}
               now={now}
+              settings={settings}
               onStatusChange={onStatusChange}
               onOpen={onOpen}
             />
@@ -92,6 +96,7 @@ export function WorkOrderList({
             order={order}
             recent={recentIds.includes(order.id)}
             now={now}
+            settings={settings}
             onStatusChange={onStatusChange}
             onOpen={onOpen}
           />
